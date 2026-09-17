@@ -1,0 +1,4 @@
+# Dependencias para ejecutar las pruebas del núcleo sin requerir el terminal MT5.
+pandas
+numpy
+pytest
