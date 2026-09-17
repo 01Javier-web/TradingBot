@@ -1,14 +1,15 @@
 """Punto de entrada del TradingBot.
 
-En esta primera versión solo comprobamos que el proyecto puede cargar
-la capa de conexión con MetaTrader 5. No ejecuta operaciones.
+Etapa de infraestructura: conecta con MT5 y lee información de la cuenta.
+No ejecuta operaciones.
 """
 
-from mt5.connection import initialize, shutdown, last_error
+from mt5.account import get_account_info
+from mt5.connection import initialize, last_error, shutdown
 
 
 def main() -> None:
-    print("TradingBot - modo inicial (sin operaciones reales)")
+    print("TradingBot - diagnóstico MT5 (sin operaciones)")
 
     if not initialize():
         print("No se pudo inicializar MetaTrader 5.")
@@ -17,9 +18,21 @@ def main() -> None:
 
     try:
         print("MetaTrader 5 inicializado correctamente.")
-        print("Siguiente etapa: leer información de cuenta y mercado.")
+
+        account = get_account_info()
+        if account is None:
+            print("No se pudo leer la información de la cuenta.")
+            print(f"Error MT5: {last_error()}")
+            return
+
+        print(f"Cuenta: {account.login}")
+        print(f"Servidor: {account.server}")
+        print(f"Balance: {account.balance}")
+        print(f"Equity: {account.equity}")
+        print("Lectura de cuenta OK. No se ha enviado ninguna operación.")
     finally:
         shutdown()
+        print("Conexión MT5 cerrada.")
 
 
 if __name__ == "__main__":
