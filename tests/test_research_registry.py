@@ -3,7 +3,13 @@
 from pathlib import Path
 
 from ai.research_pipeline import run_research
-from analytics.research_registry import load_research_record, record_from_run, save_research_record
+from analytics.research_registry import (
+    compare_research_records,
+    list_research_records,
+    load_research_record,
+    record_from_run,
+    save_research_record,
+)
 from app.research_demo import synthetic_data
 from backtesting.optimizer import ParameterGrid
 
@@ -35,3 +41,31 @@ def test_save_research_record_uses_experiment_id(tmp_path: Path) -> None:
     document = load_research_record(path)
     assert document["experiment_id"] == run.experiment_id
     assert document["manifest"]["data_fingerprint"] == run.manifest.data_fingerprint
+
+
+def test_list_research_records_returns_saved_runs(tmp_path: Path) -> None:
+    run = _run()
+    directory = tmp_path / "research"
+    save_research_record(run, directory)
+
+    records = list_research_records(directory)
+
+    assert len(records) == 1
+    assert records[0].experiment_id == run.experiment_id
+
+
+def test_list_missing_directory_is_empty(tmp_path: Path) -> None:
+    assert list_research_records(tmp_path / "missing") == ()
+
+
+def test_compare_research_records_describes_context() -> None:
+    first = record_from_run(_run())
+    second = record_from_run(_run())
+
+    comparison = compare_research_records(first, second)
+
+    assert comparison["same_data"] is True
+    assert comparison["same_rows"] is True
+    assert comparison["same_train_ratio"] is True
+    assert comparison["first_experiment_id"] == first.experiment_id
+    assert comparison["second_experiment_id"] == second.experiment_id
