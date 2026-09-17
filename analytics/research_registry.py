@@ -19,6 +19,9 @@ class ResearchRecord:
     data_fingerprint: str
     rows: int
     train_ratio: float
+    fast_ema_periods: tuple[int, ...]
+    slow_ema_periods: tuple[int, ...]
+    rsi_periods: tuple[int, ...]
 
 
 def record_from_run(run: ResearchRun) -> ResearchRecord:
@@ -28,6 +31,9 @@ def record_from_run(run: ResearchRun) -> ResearchRecord:
         data_fingerprint=run.manifest.data_fingerprint,
         rows=run.manifest.rows,
         train_ratio=run.manifest.train_ratio,
+        fast_ema_periods=run.manifest.fast_ema_periods,
+        slow_ema_periods=run.manifest.slow_ema_periods,
+        rsi_periods=run.manifest.rsi_periods,
     )
 
 
@@ -65,6 +71,9 @@ def list_research_records(directory: str | Path) -> tuple[ResearchRecord, ...]:
                 data_fingerprint=manifest["data_fingerprint"],
                 rows=manifest["rows"],
                 train_ratio=manifest["train_ratio"],
+                fast_ema_periods=tuple(manifest["fast_ema_periods"]),
+                slow_ema_periods=tuple(manifest["slow_ema_periods"]),
+                rsi_periods=tuple(manifest["rsi_periods"]),
             )
         )
     return tuple(records)
@@ -74,11 +83,14 @@ def compare_research_records(
     first: ResearchRecord,
     second: ResearchRecord,
 ) -> dict[str, object]:
-    """Describe diferencias de contexto entre dos investigaciones."""
+    """Describe diferencias de datos, partición y parámetros entre investigaciones."""
     return {
         "same_data": first.data_fingerprint == second.data_fingerprint,
         "same_rows": first.rows == second.rows,
         "same_train_ratio": first.train_ratio == second.train_ratio,
+        "same_fast_ema_grid": first.fast_ema_periods == second.fast_ema_periods,
+        "same_slow_ema_grid": first.slow_ema_periods == second.slow_ema_periods,
+        "same_rsi_grid": first.rsi_periods == second.rsi_periods,
         "first_experiment_id": first.experiment_id,
         "second_experiment_id": second.experiment_id,
     }
