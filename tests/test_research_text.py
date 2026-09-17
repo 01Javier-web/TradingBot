@@ -19,6 +19,9 @@ def test_format_research_run_contains_auditable_sections() -> None:
     assert "=== TradingBot Research Report ===" in report
     assert "Resultados: 1" in report
     assert "Validación: OK" in report
+    assert "Calidad - muestras: 1" in report
+    assert "Calidad - resultados finitos: SI" in report
+    assert "Calidad - generalización train+test:" in report
     assert "Candidatos consistentes:" in report
     assert "Modo: simulation-first" in report
     assert "Ejecución real: BLOQUEADA" in report
