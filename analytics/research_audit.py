@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 from analytics.research_integrity import IntegrityCheck, validate_record_integrity
-from analytics.research_registry import load_research_record
 
 
 @dataclass(frozen=True)
@@ -30,8 +30,9 @@ def audit_catalog(directory: str | Path) -> CatalogAudit:
     paths = sorted(destination.glob("*.json"))
     for path in paths:
         try:
-            check = validate_record_integrity(load_research_record(path))
-        except (OSError, ValueError) as exc:
+            document = json.loads(path.read_text(encoding="utf-8"))
+            check = validate_record_integrity(document)
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             check = IntegrityCheck(False, (f"No se pudo leer {path.name}: {exc}.",))
         checks.append(check)
         issues.extend(f"{path.name}: {issue}" for issue in check.issues)
