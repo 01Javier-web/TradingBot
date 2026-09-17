@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 from risk.validation import validate_risk_inputs
 
@@ -17,10 +18,10 @@ class RiskConfig:
     stop_loss_required: bool = True
 
     def __post_init__(self) -> None:
-        if not 0 < self.max_risk_per_trade <= 1:
-            raise ValueError("max_risk_per_trade debe estar entre 0 y 1")
-        if not 0 < self.max_daily_loss <= 1:
-            raise ValueError("max_daily_loss debe estar entre 0 y 1")
+        if not isfinite(self.max_risk_per_trade) or not 0 < self.max_risk_per_trade <= 1:
+            raise ValueError("max_risk_per_trade debe ser finito y estar entre 0 y 1")
+        if not isfinite(self.max_daily_loss) or not 0 < self.max_daily_loss <= 1:
+            raise ValueError("max_daily_loss debe ser finito y estar entre 0 y 1")
         if self.max_open_positions <= 0:
             raise ValueError("max_open_positions debe ser mayor que 0")
 
