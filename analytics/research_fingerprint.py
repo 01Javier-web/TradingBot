@@ -21,9 +21,17 @@ def fingerprint_dataframe(df: pd.DataFrame) -> str:
     for column in _REQUIRED_COLUMNS[1:]:
         frame[column] = pd.to_numeric(frame[column], errors="raise")
 
-    canonical = frame.to_csv(
-        index=False,
-        lineterminator="\n",
-        float_format=".17g",
-    )
+    canonical_rows = [
+        "|".join(
+            [
+                str(row.time),
+                format(row.open, ".17g"),
+                format(row.high, ".17g"),
+                format(row.low, ".17g"),
+                format(row.close, ".17g"),
+            ]
+        )
+        for row in frame.itertuples(index=False)
+    ]
+    canonical = "\n".join(canonical_rows) + "\n"
     return sha256(canonical.encode("utf-8")).hexdigest()
