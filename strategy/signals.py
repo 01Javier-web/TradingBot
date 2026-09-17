@@ -35,11 +35,13 @@ class StrategyConfig:
     atr_period: int = 14
     min_atr: float = 0.0
 
+    def __post_init__(self) -> None:
+        _validate_config(self)
+
 
 def add_indicators(df: pd.DataFrame, config: StrategyConfig | None = None) -> pd.DataFrame:
     """Añade indicadores a una copia del DataFrame sin modificar el original."""
     config = config or StrategyConfig()
-    _validate_config(config)
 
     required = {"high", "low", "close"}
     missing = required - set(df.columns)
@@ -66,7 +68,6 @@ def generate_signal(row: pd.Series, config: StrategyConfig | None = None) -> Sig
     WAIT: cualquier condición incompleta o contradictoria.
     """
     config = config or StrategyConfig()
-    _validate_config(config)
 
     required = ("ema_fast", "ema_slow", "rsi", "atr")
     if any(pd.isna(row.get(column)) for column in required):
@@ -99,7 +100,7 @@ def _validate_config(config: StrategyConfig) -> None:
         config.rsi_period,
         config.atr_period,
     )
-    if any(not isinstance(value, int) or value <= 0 for value in periods):
+    if any(not isinstance(value, int) or isinstance(value, bool) or value <= 0 for value in periods):
         raise ValueError("Los periodos deben ser enteros mayores que 0")
     if config.fast_ema_period >= config.slow_ema_period:
         raise ValueError("fast_ema_period debe ser menor que slow_ema_period")
