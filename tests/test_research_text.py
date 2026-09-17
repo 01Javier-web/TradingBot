@@ -34,6 +34,7 @@ def test_format_research_run_reports_validation_issues() -> None:
             candidates=(),
         ),
         manifest=run.manifest,
+        experiment_id=run.experiment_id,
     )
 
     report = format_research_run(invalid)
