@@ -22,7 +22,8 @@ class PaperPortfolio:
     def __init__(self, initial_balance: float = 10_000.0) -> None:
         if not isfinite(initial_balance) or initial_balance <= 0:
             raise ValueError("initial_balance debe ser finito y mayor que 0")
-        self.balance = float(initial_balance)
+        self.initial_balance = float(initial_balance)
+        self.balance = self.initial_balance
         self.position: VirtualPosition | None = None
 
     def open_position(self, side: PositionSide, price: float, quantity: float, stop_loss: float | None = None) -> None:
