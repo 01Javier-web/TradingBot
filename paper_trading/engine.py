@@ -7,6 +7,7 @@ from math import isfinite
 
 import pandas as pd
 
+from analytics.paper_report import PaperPerformanceReport, build_paper_report
 from backtesting.models import PositionSide
 from paper_trading.portfolio import PaperPortfolio
 from risk.kill_switch import KillSwitch
@@ -51,6 +52,14 @@ class PaperTradingEngine:
         self._sequence += 1
         event = TradingEvent(sequence=self._sequence, action=action, **kwargs)
         self.history.append(event.to_dict())
+
+    def performance_report(self) -> PaperPerformanceReport:
+        """Genera el reporte de la sesión usando el balance inicial del portafolio."""
+        return build_paper_report(
+            self.portfolio,
+            self.history,
+            initial_balance=self.portfolio.initial_balance,
+        )
 
     def process(self, row: pd.Series) -> str:
         """Procesa una vela; datos inválidos no generan acciones de mercado."""
