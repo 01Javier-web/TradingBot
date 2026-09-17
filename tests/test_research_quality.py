@@ -1,5 +1,7 @@
 """Pruebas de evaluación descriptiva de calidad."""
 
+from math import inf, nan
+
 from backtesting.optimizer import OptimizationResult
 from ai.research_quality import assess_quality
 from strategy.signals import StrategyConfig
@@ -26,3 +28,10 @@ def test_quality_empty_results_are_explicit() -> None:
     assert quality.sample_size == 0
     assert quality.finite_results is True
     assert quality.generalization_rate == 0.0
+
+
+def test_quality_flags_non_finite_values() -> None:
+    quality = assess_quality([_result(inf, 1.0), _result(2.0, nan)])
+
+    assert quality.sample_size == 2
+    assert quality.finite_results is False
