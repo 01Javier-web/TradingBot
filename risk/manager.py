@@ -4,8 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+from numbers import Real
 
 from risk.validation import validate_risk_inputs
+
+
+def _is_finite_real(value: object) -> bool:
+    """Indica si un valor es numérico real, finito y no booleano."""
+    return isinstance(value, Real) and not isinstance(value, bool) and isfinite(value)
 
 
 @dataclass(frozen=True)
@@ -18,12 +24,18 @@ class RiskConfig:
     stop_loss_required: bool = True
 
     def __post_init__(self) -> None:
-        if not isfinite(self.max_risk_per_trade) or not 0 < self.max_risk_per_trade <= 1:
-            raise ValueError("max_risk_per_trade debe ser finito y estar entre 0 y 1")
-        if not isfinite(self.max_daily_loss) or not 0 < self.max_daily_loss <= 1:
-            raise ValueError("max_daily_loss debe ser finito y estar entre 0 y 1")
-        if self.max_open_positions <= 0:
-            raise ValueError("max_open_positions debe ser mayor que 0")
+        if not _is_finite_real(self.max_risk_per_trade) or not 0 < self.max_risk_per_trade <= 1:
+            raise ValueError("max_risk_per_trade debe ser un número finito entre 0 y 1")
+        if not _is_finite_real(self.max_daily_loss) or not 0 < self.max_daily_loss <= 1:
+            raise ValueError("max_daily_loss debe ser un número finito entre 0 y 1")
+        if (
+            not isinstance(self.max_open_positions, int)
+            or isinstance(self.max_open_positions, bool)
+            or self.max_open_positions <= 0
+        ):
+            raise ValueError("max_open_positions debe ser un entero mayor que 0")
+        if not isinstance(self.stop_loss_required, bool):
+            raise ValueError("stop_loss_required debe ser booleano")
 
 
 @dataclass(frozen=True)
@@ -49,13 +61,18 @@ class RiskManager:
         open_positions: int,
         stop_loss_distance: float | None,
     ) -> RiskDecision:
-        validation = validate_risk_inputs(
-            balance=balance,
-            risk_amount=risk_amount,
-            daily_loss=daily_loss,
-            open_positions=open_positions,
-            stop_loss_distance=stop_loss_distance,
-        )
+        """Evalúa una operación sin autorizar ninguna ejecución real."""
+        try:
+            validation = validate_risk_inputs(
+                balance=balance,
+                risk_amount=risk_amount,
+                daily_loss=daily_loss,
+                open_positions=open_positions,
+                stop_loss_distance=stop_loss_distance,
+            )
+        except (TypeError, ValueError):
+            return RiskDecision(False, "entradas de riesgo inválidas: tipos numéricos no compatibles")
+
         if not validation.valid:
             return RiskDecision(False, "entradas de riesgo inválidas: " + " ".join(validation.issues))
 
