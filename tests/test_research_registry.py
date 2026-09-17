@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from ai.research_pipeline import run_research
 from analytics.research_registry import (
     compare_research_records,
@@ -42,6 +44,29 @@ def test_save_research_record_uses_experiment_id(tmp_path: Path) -> None:
     document = load_research_record(path)
     assert document["experiment_id"] == run.experiment_id
     assert document["manifest"]["data_fingerprint"] == run.manifest.data_fingerprint
+
+
+def test_save_same_research_record_is_idempotent(tmp_path: Path) -> None:
+    run = _run()
+    directory = tmp_path / "research"
+
+    first = save_research_record(run, directory)
+    second = save_research_record(run, directory)
+
+    assert first == second
+
+
+def test_save_different_content_with_same_id_requires_overwrite(tmp_path: Path) -> None:
+    run = _run()
+    directory = tmp_path / "research"
+    path = save_research_record(run, directory)
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match=run.experiment_id):
+        save_research_record(run, directory)
+
+    save_research_record(run, directory, overwrite=True)
+    assert path.read_text(encoding="utf-8").endswith("}\n") is False
 
 
 def test_list_research_records_returns_saved_runs(tmp_path: Path) -> None:
