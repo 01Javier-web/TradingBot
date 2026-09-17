@@ -7,7 +7,6 @@ from typing import Any
 
 from analytics.research_id import build_experiment_id
 from analytics.research_manifest import ResearchManifest
-from backtesting.optimizer import ParameterGrid
 
 
 @dataclass(frozen=True)
