@@ -1,0 +1,35 @@
+"""Puente de investigación hacia revisión humana, sin autoridad operativa."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from ai.research_pipeline import ResearchRun
+from backtesting.walk_forward_validation import WalkForwardValidation
+
+
+@dataclass(frozen=True)
+class ResearchDecision:
+    """Estado descriptivo para decidir si una investigación requiere revisión."""
+
+    review_required: bool
+    reasons: tuple[str, ...]
+
+
+def build_research_decision(
+    run: ResearchRun,
+    walk_forward_validation: WalkForwardValidation | None = None,
+) -> ResearchDecision:
+    """Marca condiciones que requieren revisión sin recomendar operaciones."""
+    reasons: list[str] = []
+
+    if not run.evidence.validation.valid:
+        reasons.append("La evidencia de investigación contiene problemas de validación.")
+    if not run.results:
+        reasons.append("No existen resultados para revisar.")
+    if not run.evidence.candidates:
+        reasons.append("No hay candidatos consistentes train/test para revisar.")
+    if walk_forward_validation is not None and not walk_forward_validation.valid:
+        reasons.append("La validación walk-forward contiene problemas.")
+
+    return ResearchDecision(review_required=bool(reasons), reasons=tuple(reasons))
