@@ -29,6 +29,7 @@ def test_record_from_run_keeps_experiment_identity() -> None:
     assert record.data_fingerprint == run.manifest.data_fingerprint
     assert record.rows == 80
     assert record.train_ratio == 0.7
+    assert record.fast_ema_periods == (5,)
 
 
 def test_save_research_record_uses_experiment_id(tmp_path: Path) -> None:
@@ -52,6 +53,7 @@ def test_list_research_records_returns_saved_runs(tmp_path: Path) -> None:
 
     assert len(records) == 1
     assert records[0].experiment_id == run.experiment_id
+    assert records[0].slow_ema_periods == (20,)
 
 
 def test_list_missing_directory_is_empty(tmp_path: Path) -> None:
@@ -60,12 +62,20 @@ def test_list_missing_directory_is_empty(tmp_path: Path) -> None:
 
 def test_compare_research_records_describes_context() -> None:
     first = record_from_run(_run())
-    second = record_from_run(_run())
+    second = record_from_run(
+        run_research(
+            synthetic_data(80),
+            ParameterGrid(fast_ema_periods=(10,), slow_ema_periods=(20,), rsi_periods=(14,)),
+        )
+    )
 
     comparison = compare_research_records(first, second)
 
     assert comparison["same_data"] is True
     assert comparison["same_rows"] is True
     assert comparison["same_train_ratio"] is True
+    assert comparison["same_fast_ema_grid"] is False
+    assert comparison["same_slow_ema_grid"] is True
+    assert comparison["same_rsi_grid"] is True
     assert comparison["first_experiment_id"] == first.experiment_id
     assert comparison["second_experiment_id"] == second.experiment_id
