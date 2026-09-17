@@ -33,6 +33,7 @@ def test_format_research_run_reports_validation_issues() -> None:
             validation=run.evidence.validation.__class__(False, ("problema de prueba",)),
             candidates=(),
         ),
+        manifest=run.manifest,
     )
 
     report = format_research_run(invalid)
