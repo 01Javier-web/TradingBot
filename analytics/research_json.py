@@ -7,12 +7,14 @@ from pathlib import Path
 from typing import Any
 
 from ai.research_pipeline import ResearchRun
+from analytics.research_manifest import manifest_to_dict
 from analytics.research_report import candidate_summary
 
 
 def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
     """Convierte una corrida en un documento JSON estable y auditable."""
     return {
+        "manifest": manifest_to_dict(run.manifest),
         "finding": {
             "experiments": run.finding.experiments,
             "profitable_train": run.finding.profitable_train,
