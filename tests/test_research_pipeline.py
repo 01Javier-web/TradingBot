@@ -31,6 +31,7 @@ def test_research_pipeline_returns_results_and_finding() -> None:
     assert run.finding.profitable_test >= 0
     assert run.manifest.rows == 80
     assert run.manifest.train_ratio == 0.7
+    assert len(run.manifest.data_fingerprint) == 64
 
 
 def test_research_pipeline_preserves_optimizer_order() -> None:
