@@ -2,3 +2,4 @@ MetaTrader5==5.0.6180
 pandas
 numpy
 python-dotenv
+pytest
