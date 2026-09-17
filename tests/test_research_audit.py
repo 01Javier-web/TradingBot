@@ -4,31 +4,42 @@ from pathlib import Path
 import json
 
 from analytics.research_audit import audit_catalog
+from analytics.research_id import build_experiment_id
+from analytics.research_manifest import ResearchManifest
 
 
-def _document(experiment_id: str = "abc") -> dict:
+def _document() -> dict:
+    manifest = ResearchManifest(
+        rows=80,
+        train_ratio=0.7,
+        data_fingerprint="a" * 64,
+        fast_ema_periods=(5,),
+        slow_ema_periods=(20,),
+        rsi_periods=(14,),
+    )
     return {
-        "experiment_id": experiment_id,
+        "experiment_id": build_experiment_id(manifest),
         "manifest": {
-            "rows": 80,
-            "train_ratio": 0.7,
-            "data_fingerprint": "a" * 64,
-            "fast_ema_periods": [5],
-            "slow_ema_periods": [20],
-            "rsi_periods": [14],
+            "rows": manifest.rows,
+            "train_ratio": manifest.train_ratio,
+            "data_fingerprint": manifest.data_fingerprint,
+            "fast_ema_periods": list(manifest.fast_ema_periods),
+            "slow_ema_periods": list(manifest.slow_ema_periods),
+            "rsi_periods": list(manifest.rsi_periods),
         },
     }
 
 
 def test_audit_missing_directory_is_empty(tmp_path: Path) -> None:
-    assert audit_catalog(tmp_path / "missing") == audit_catalog(tmp_path / "missing")
     result = audit_catalog(tmp_path / "missing")
+
     assert result.files == 0
     assert result.valid == 0
     assert result.invalid == 0
+    assert result.issues == ()
 
 
-def test_audit_counts_invalid_record(tmp_path: Path) -> None:
+def test_audit_counts_valid_and_invalid_records(tmp_path: Path) -> None:
     directory = tmp_path / "research"
     directory.mkdir()
     (directory / "valid.json").write_text(json.dumps(_document()), encoding="utf-8")
@@ -39,6 +50,7 @@ def test_audit_counts_invalid_record(tmp_path: Path) -> None:
     result = audit_catalog(directory)
 
     assert result.files == 2
-    assert result.valid == 0
-    assert result.invalid == 2
-    assert len(result.issues) == 2
+    assert result.valid == 1
+    assert result.invalid == 1
+    assert len(result.issues) == 1
+    assert "invalid.json" in result.issues[0]
