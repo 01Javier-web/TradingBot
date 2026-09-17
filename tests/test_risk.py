@@ -72,6 +72,15 @@ def test_rejects_negative_open_positions() -> None:
     assert "open_positions no puede ser negativo" in decision.reason
 
 
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_invalid_config_limits_are_rejected(value: float) -> None:
+    with pytest.raises(ValueError):
+        RiskConfig(max_risk_per_trade=value)
+
+    with pytest.raises(ValueError):
+        RiskConfig(max_daily_loss=value)
+
+
 def test_invalid_config_is_rejected() -> None:
     with pytest.raises(ValueError):
         RiskConfig(max_risk_per_trade=0)
