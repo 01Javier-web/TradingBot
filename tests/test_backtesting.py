@@ -26,8 +26,9 @@ def test_backtest_is_next_candle_entry() -> None:
     })
     result = BacktestEngine(quantity=1).run(df)
     assert result.trades
-    assert result.trades[0].entry_time == df.loc[1, "time"]
-    assert result.trades[0].entry_price == pytest.approx(df.loc[1, "open"])
+    # La primera señal válida aparece en la vela 1; la entrada debe ocurrir en la siguiente.
+    assert result.trades[0].entry_time == df.loc[2, "time"]
+    assert result.trades[0].entry_price == pytest.approx(df.loc[2, "open"])
 
 
 def test_metrics() -> None:
