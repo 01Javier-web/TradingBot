@@ -1,5 +1,7 @@
 """Pruebas del portafolio virtual."""
 
+from math import inf, nan
+
 import pytest
 
 from backtesting.models import PositionSide
@@ -25,3 +27,31 @@ def test_only_one_position_is_allowed() -> None:
     portfolio.open_position(PositionSide.BUY, 100, 1, 95)
     with pytest.raises(ValueError):
         portfolio.open_position(PositionSide.SELL, 100, 1, 105)
+
+
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_portfolio_rejects_non_finite_initial_balance(value: float) -> None:
+    with pytest.raises(ValueError):
+        PaperPortfolio(value)
+
+
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_portfolio_rejects_non_finite_position_values(value: float) -> None:
+    portfolio = PaperPortfolio()
+
+    with pytest.raises(ValueError):
+        portfolio.open_position(PositionSide.BUY, value, 1, 95)
+    with pytest.raises(ValueError):
+        portfolio.open_position(PositionSide.BUY, 100, value, 95)
+    with pytest.raises(ValueError):
+        portfolio.open_position(PositionSide.BUY, 100, 1, value)
+
+
+@pytest.mark.parametrize("value", [nan, inf, -inf])
+def test_portfolio_rejects_non_finite_prices(value: float) -> None:
+    portfolio = PaperPortfolio()
+
+    with pytest.raises(ValueError):
+        portfolio.close_position(value)
+    with pytest.raises(ValueError):
+        portfolio.mark_to_market(value)
