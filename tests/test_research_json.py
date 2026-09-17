@@ -18,7 +18,9 @@ def _run():
 def test_research_run_to_dict_contains_audit_sections() -> None:
     document = research_run_to_dict(_run())
 
-    assert set(document) == {"finding", "validation", "candidates"}
+    assert set(document) == {"manifest", "finding", "validation", "candidates"}
+    assert document["manifest"]["rows"] == 80
+    assert document["manifest"]["train_ratio"] == 0.7
     assert document["finding"]["experiments"] == 1
     assert document["validation"]["valid"] is True
     assert len(document["candidates"]) == 1
@@ -30,4 +32,5 @@ def test_save_research_run_writes_valid_json(tmp_path: Path) -> None:
     save_research_run(_run(), destination)
 
     assert destination.exists()
+    assert '"manifest"' in destination.read_text(encoding="utf-8")
     assert '"finding"' in destination.read_text(encoding="utf-8")
