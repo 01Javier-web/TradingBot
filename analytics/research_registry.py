@@ -47,3 +47,38 @@ def load_research_record(path: str | Path) -> dict[str, Any]:
     """Carga una corrida previamente registrada."""
     source = Path(path)
     return json.loads(source.read_text(encoding="utf-8"))
+
+
+def list_research_records(directory: str | Path) -> tuple[ResearchRecord, ...]:
+    """Lista investigaciones registradas ordenadas por ID, sin ejecutar nada."""
+    destination = Path(directory)
+    if not destination.exists():
+        return ()
+
+    records: list[ResearchRecord] = []
+    for path in sorted(destination.glob("*.json")):
+        document = load_research_record(path)
+        manifest = document["manifest"]
+        records.append(
+            ResearchRecord(
+                experiment_id=document["experiment_id"],
+                data_fingerprint=manifest["data_fingerprint"],
+                rows=manifest["rows"],
+                train_ratio=manifest["train_ratio"],
+            )
+        )
+    return tuple(records)
+
+
+def compare_research_records(
+    first: ResearchRecord,
+    second: ResearchRecord,
+) -> dict[str, object]:
+    """Describe diferencias de contexto entre dos investigaciones."""
+    return {
+        "same_data": first.data_fingerprint == second.data_fingerprint,
+        "same_rows": first.rows == second.rows,
+        "same_train_ratio": first.train_ratio == second.train_ratio,
+        "first_experiment_id": first.experiment_id,
+        "second_experiment_id": second.experiment_id,
+    }
