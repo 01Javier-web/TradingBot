@@ -25,8 +25,16 @@ def rsi(series: pd.Series, period: int = 14) -> pd.Series:
     losses = -delta.clip(upper=0)
     average_gain = gains.ewm(alpha=1 / period, adjust=False).mean()
     average_loss = losses.ewm(alpha=1 / period, adjust=False).mean()
-    relative_strength = average_gain / average_loss.replace(0, pd.NA)
-    return 100 - (100 / (1 + relative_strength))
+
+    # Cuando no hay pérdidas en la ventana, RSI = 100; cuando no hay
+    # ganancias ni pérdidas, RSI = 50. Evitamos NaN en tendencias constantes.
+    result = pd.Series(50.0, index=series.index, dtype=float)
+    both_positive = (average_gain > 0) & (average_loss > 0)
+    no_loss = (average_gain > 0) & (average_loss == 0)
+    relative_strength = average_gain[both_positive] / average_loss[both_positive]
+    result.loc[both_positive] = 100 - (100 / (1 + relative_strength))
+    result.loc[no_loss] = 100.0
+    return result
 
 
 def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
@@ -46,7 +54,7 @@ def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 
 def _validate_period(period: int) -> None:
-    if not isinstance(period, int) or period <= 0:
+    if not isinstance(period, int) or isinstance(period, bool) or period <= 0:
         raise ValueError("period debe ser un entero mayor que 0")
 
 
