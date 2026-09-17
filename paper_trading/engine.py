@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import isfinite
+
 import pandas as pd
 
 from backtesting.models import PositionSide
@@ -15,8 +17,8 @@ class PaperTradingEngine:
     """Procesa velas secuencialmente sin enviar ninguna orden a MT5."""
 
     def __init__(self, portfolio: PaperPortfolio, risk_manager: RiskManager | None = None, quantity: float = 1.0, kill_switch: KillSwitch | None = None) -> None:
-        if quantity <= 0:
-            raise ValueError("quantity debe ser mayor que 0")
+        if not isfinite(quantity) or quantity <= 0:
+            raise ValueError("quantity debe ser finito y mayor que 0")
         self.portfolio = portfolio
         self.risk_manager = risk_manager or RiskManager()
         self.quantity = float(quantity)
@@ -25,13 +27,19 @@ class PaperTradingEngine:
         self.history: list[dict[str, object]] = []
 
     def process(self, row: pd.Series) -> str:
-        """Procesa una vela; un kill switch activo bloquea nuevas acciones."""
+        """Procesa una vela; datos numéricos inválidos no generan acciones."""
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
             self.history.append({"action": "KILL_SWITCH", "reason": reason})
             return f"STOPPED: Kill switch activo: {reason}"
 
-        price = float(row["close"])
+        try:
+            price = float(row["close"])
+        except (KeyError, TypeError, ValueError):
+            return "WAIT: precio inválido"
+        if not isfinite(price) or price <= 0:
+            return "WAIT: precio inválido"
+
         if self.portfolio.position is not None:
             position = self.portfolio.position
             hit_stop = (
@@ -54,7 +62,13 @@ class PaperTradingEngine:
 
         if self.portfolio.position is None and signal in (Signal.BUY, Signal.SELL):
             side = PositionSide(signal.value)
-            stop_distance = abs(float(row.get("atr", 0.0)))
+            try:
+                raw_atr = float(row.get("atr", 0.0))
+            except (TypeError, ValueError):
+                return "WAIT: ATR inválido"
+            if not isfinite(raw_atr):
+                return "WAIT: ATR inválido"
+            stop_distance = abs(raw_atr)
             decision = self.risk_manager.approve(
                 balance=self.portfolio.balance,
                 risk_amount=stop_distance * self.quantity,
