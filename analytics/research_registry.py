@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from ai.research_pipeline import ResearchRun
+from analytics.research_integrity import validate_record_integrity
 from analytics.research_json import research_run_to_dict
 
 
@@ -62,9 +63,15 @@ def save_research_record(
 
 
 def load_research_record(path: str | Path) -> dict[str, Any]:
-    """Carga una corrida previamente registrada."""
+    """Carga una corrida y rechaza registros con identidad inconsistente."""
     source = Path(path)
-    return json.loads(source.read_text(encoding="utf-8"))
+    document = json.loads(source.read_text(encoding="utf-8"))
+    integrity = validate_record_integrity(document)
+    if not integrity.valid:
+        raise ValueError(
+            f"Registro de investigación inválido en {source}: " + "; ".join(integrity.issues)
+        )
+    return document
 
 
 def list_research_records(directory: str | Path) -> tuple[ResearchRecord, ...]:
