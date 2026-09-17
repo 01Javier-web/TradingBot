@@ -24,6 +24,7 @@ def test_research_run_to_dict_contains_audit_sections() -> None:
         "finding",
         "validation",
         "quality",
+        "decision",
         "candidates",
     }
     assert len(document["experiment_id"]) == 64
@@ -34,6 +35,8 @@ def test_research_run_to_dict_contains_audit_sections() -> None:
     assert document["validation"]["valid"] is True
     assert document["quality"]["sample_size"] == 1
     assert document["quality"]["finite_results"] is True
+    assert document["decision"]["execution_authorized"] is False
+    assert document["decision"]["mode"] == "simulation-first"
     assert len(document["candidates"]) == 1
 
 
@@ -43,7 +46,9 @@ def test_save_research_run_writes_valid_json(tmp_path: Path) -> None:
     save_research_run(_run(), destination)
 
     assert destination.exists()
-    assert '"experiment_id"' in destination.read_text(encoding="utf-8")
-    assert '"manifest"' in destination.read_text(encoding="utf-8")
-    assert '"finding"' in destination.read_text(encoding="utf-8")
-    assert '"quality"' in destination.read_text(encoding="utf-8")
+    content = destination.read_text(encoding="utf-8")
+    assert '"experiment_id"' in content
+    assert '"manifest"' in content
+    assert '"finding"' in content
+    assert '"quality"' in content
+    assert '"decision"' in content
