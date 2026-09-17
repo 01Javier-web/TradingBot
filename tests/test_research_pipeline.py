@@ -29,6 +29,8 @@ def test_research_pipeline_returns_results_and_finding() -> None:
     assert run.finding.experiments == 4
     assert run.finding.profitable_train >= 0
     assert run.finding.profitable_test >= 0
+    assert run.manifest.rows == 80
+    assert run.manifest.train_ratio == 0.7
 
 
 def test_research_pipeline_preserves_optimizer_order() -> None:
@@ -40,3 +42,13 @@ def test_research_pipeline_preserves_optimizer_order() -> None:
     assert len(run.results) == 1
     assert run.results[0].config.fast_ema_period == 5
     assert run.results[0].config.slow_ema_period == 20
+
+
+def test_research_pipeline_records_custom_train_ratio() -> None:
+    run = run_research(
+        _data(),
+        ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,), rsi_periods=(14,)),
+        train_ratio=0.75,
+    )
+
+    assert run.manifest.train_ratio == 0.75
