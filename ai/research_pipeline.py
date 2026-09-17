@@ -13,6 +13,7 @@ import pandas as pd
 
 from ai.research_evidence import ResearchEvidence, build_evidence
 from ai.researcher import ResearchFinding, summarize_optimization
+from analytics.research_fingerprint import fingerprint_dataframe
 from analytics.research_manifest import ResearchManifest
 from backtesting.optimizer import OptimizationResult, ParameterGrid, optimize
 
@@ -33,8 +34,14 @@ def run_research(
     train_ratio: float = 0.7,
 ) -> ResearchRun:
     """Ejecuta optimización y conserva el contexto usado para repetirla."""
+    data_fingerprint = fingerprint_dataframe(df)
     results = optimize(df, grid, train_ratio=train_ratio)
     finding = summarize_optimization(results)
     evidence = build_evidence(results)
-    manifest = ResearchManifest.from_grid(len(df), grid, train_ratio=train_ratio)
+    manifest = ResearchManifest.from_grid(
+        len(df),
+        grid,
+        train_ratio=train_ratio,
+        data_fingerprint=data_fingerprint,
+    )
     return ResearchRun(tuple(results), finding, evidence, manifest)
