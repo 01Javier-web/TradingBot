@@ -1,0 +1,28 @@
+# Entorno virtual de Python
+.venv/
+venv/
+env/
+
+# Variables de entorno y credenciales
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# IDE / sistema
+.vscode/
+.idea/
+*.log
+
+# Datos generados localmente
+data/raw/
+data/processed/
+logs/
+
+# Backups locales
+*.bak
