@@ -27,7 +27,7 @@ class PaperTradingEngine:
         self.history: list[dict[str, object]] = []
 
     def process(self, row: pd.Series) -> str:
-        """Procesa una vela; datos numéricos inválidos no generan acciones."""
+        """Procesa una vela; datos inválidos no generan acciones de mercado."""
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
             self.history.append({"action": "KILL_SWITCH", "reason": reason})
@@ -36,8 +36,10 @@ class PaperTradingEngine:
         try:
             price = float(row["close"])
         except (KeyError, TypeError, ValueError):
+            self.history.append({"action": "REJECTED", "reason": "precio inválido"})
             return "WAIT: precio inválido"
         if not isfinite(price) or price <= 0:
+            self.history.append({"action": "REJECTED", "reason": "precio inválido"})
             return "WAIT: precio inválido"
 
         if self.portfolio.position is not None:
@@ -58,15 +60,21 @@ class PaperTradingEngine:
             try:
                 signal = Signal(signal)
             except ValueError:
+                self.history.append({"action": "REJECTED", "reason": "señal inválida"})
                 return "WAIT: señal inválida"
+        if not isinstance(signal, Signal):
+            self.history.append({"action": "REJECTED", "reason": "señal inválida"})
+            return "WAIT: señal inválida"
 
         if self.portfolio.position is None and signal in (Signal.BUY, Signal.SELL):
             side = PositionSide(signal.value)
             try:
                 raw_atr = float(row.get("atr", 0.0))
             except (TypeError, ValueError):
+                self.history.append({"action": "REJECTED", "reason": "ATR inválido"})
                 return "WAIT: ATR inválido"
             if not isfinite(raw_atr):
+                self.history.append({"action": "REJECTED", "reason": "ATR inválido"})
                 return "WAIT: ATR inválido"
             stop_distance = abs(raw_atr)
             decision = self.risk_manager.approve(
@@ -80,6 +88,10 @@ class PaperTradingEngine:
                 self.history.append({"action": "REJECTED", "reason": decision.reason})
                 return f"REJECTED: {decision.reason}"
             stop_loss = price - stop_distance if side is PositionSide.BUY else price + stop_distance
+            if not isfinite(stop_loss) or stop_loss <= 0:
+                reason = "stop-loss calculado inválido"
+                self.history.append({"action": "REJECTED", "reason": reason})
+                return f"REJECTED: {reason}"
             self.portfolio.open_position(side, price, self.quantity, stop_loss)
             self.history.append({"action": "OPEN", "side": side.value, "price": price, "stop_loss": stop_loss})
             return f"OPEN {side.value}"
