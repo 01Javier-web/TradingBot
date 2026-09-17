@@ -37,15 +37,27 @@ def record_from_run(run: ResearchRun) -> ResearchRecord:
     )
 
 
-def save_research_record(run: ResearchRun, directory: str | Path) -> Path:
-    """Guarda una corrida usando su ID como nombre, sin sobrescribir otra."""
+def save_research_record(
+    run: ResearchRun,
+    directory: str | Path,
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """Guarda una corrida identificada por su ID, evitando sobrescrituras accidentales."""
     destination = Path(directory)
     destination.mkdir(parents=True, exist_ok=True)
     path = destination / f"{run.experiment_id}.json"
-    path.write_text(
-        json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    content = json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False)
+
+    if path.exists() and not overwrite:
+        existing = path.read_text(encoding="utf-8")
+        if existing != content:
+            raise FileExistsError(
+                f"Ya existe una investigación diferente con el ID {run.experiment_id}"
+            )
+        return path
+
+    path.write_text(content, encoding="utf-8")
     return path
 
 
