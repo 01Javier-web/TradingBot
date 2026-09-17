@@ -11,6 +11,7 @@ import MetaTrader5 as mt5
 import pandas as pd
 
 from ai.coordinator import Coordinator
+from analytics.paper_status import PaperStatus, build_paper_status
 from data.market_data import get_candles
 from paper_trading.engine import PaperTradingEngine
 from risk.kill_switch import KillSwitch
@@ -44,6 +45,8 @@ class LivePaperRunner:
         self.kill_switch = kill_switch or KillSwitch()
         self.coordinator = Coordinator()
         self.last_candle_time = None
+        self.last_price: float | None = None
+        self.last_signal = "WAIT"
 
     def process_once(self) -> str:
         """Lee una vela nueva y la procesa virtualmente si corresponde."""
@@ -61,9 +64,21 @@ class LivePaperRunner:
         self.last_candle_time = latest
         enriched = generate_signals(frame, self.strategy)
         row = enriched.iloc[-1]
+        self.last_price = float(row["close"])
         analysis = self.coordinator.analyze(row)
+        self.last_signal = analysis.recommendation
         event = self.engine.process(row)
         return f"{latest.isoformat()} | signal={analysis.recommendation} | {event}"
+
+    def status(self) -> PaperStatus:
+        """Devuelve un snapshot actual del estado virtual, sin efectos secundarios."""
+        return build_paper_status(
+            self.engine.portfolio,
+            self.engine.history,
+            mark_price=self.last_price,
+            kill_switch_active=self.kill_switch.active,
+            kill_switch_reason=self.kill_switch.reason,
+        )
 
     def run(self, iterations: int | None = None) -> list[str]:
         """Ejecuta iteraciones limitadas o hasta una interrupción del proceso."""
