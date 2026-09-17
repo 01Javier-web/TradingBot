@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from risk.validation import validate_risk_inputs
+
 
 @dataclass(frozen=True)
 class RiskConfig:
@@ -46,14 +48,18 @@ class RiskManager:
         open_positions: int,
         stop_loss_distance: float | None,
     ) -> RiskDecision:
-        if balance <= 0:
-            return RiskDecision(False, "balance inválido")
-        if risk_amount <= 0:
-            return RiskDecision(False, "riesgo por operación inválido")
+        validation = validate_risk_inputs(
+            balance=balance,
+            risk_amount=risk_amount,
+            daily_loss=daily_loss,
+            open_positions=open_positions,
+            stop_loss_distance=stop_loss_distance,
+        )
+        if not validation.valid:
+            return RiskDecision(False, "entradas de riesgo inválidas: " + " ".join(validation.issues))
+
         if risk_amount > balance * self.config.max_risk_per_trade:
             return RiskDecision(False, "supera el riesgo máximo por operación")
-        if daily_loss < 0:
-            return RiskDecision(False, "pérdida diaria inválida")
         if daily_loss >= balance * self.config.max_daily_loss:
             return RiskDecision(False, "límite de pérdida diaria alcanzado")
         if open_positions >= self.config.max_open_positions:
