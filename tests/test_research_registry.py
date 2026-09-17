@@ -104,3 +104,13 @@ def test_compare_research_records_describes_context() -> None:
     assert comparison["same_rsi_grid"] is True
     assert comparison["first_experiment_id"] == first.experiment_id
     assert comparison["second_experiment_id"] == second.experiment_id
+
+
+def test_load_research_record_rejects_tampered_manifest(tmp_path: Path) -> None:
+    run = _run()
+    path = save_research_record(run, tmp_path / "research")
+    document = path.read_text(encoding="utf-8").replace('"train_ratio": 0.7', '"train_ratio": 0.8')
+    path.write_text(document, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="experiment_id"):
+        load_research_record(path)
