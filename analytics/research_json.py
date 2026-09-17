@@ -14,6 +14,7 @@ from analytics.research_report import candidate_summary
 def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
     """Convierte una corrida en un documento JSON estable y auditable."""
     return {
+        "experiment_id": run.experiment_id,
         "manifest": manifest_to_dict(run.manifest),
         "finding": {
             "experiments": run.finding.experiments,
