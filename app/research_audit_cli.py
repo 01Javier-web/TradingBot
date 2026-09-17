@@ -20,8 +20,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def format_audit(result: CatalogAudit) -> str:
     """Genera una salida estable y explícita sobre la integridad."""
+    status = "OK" if result.invalid == 0 else "ERROR"
     lines = [
         "=== TradingBot Research Audit ===",
+        f"Estado: {status}",
         f"Archivos: {result.files}",
         f"Válidos: {result.valid}",
         f"Inválidos: {result.invalid}",
