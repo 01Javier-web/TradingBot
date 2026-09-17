@@ -14,6 +14,7 @@ import pandas as pd
 from ai.research_evidence import ResearchEvidence, build_evidence
 from ai.researcher import ResearchFinding, summarize_optimization
 from analytics.research_fingerprint import fingerprint_dataframe
+from analytics.research_id import build_experiment_id
 from analytics.research_manifest import ResearchManifest
 from backtesting.optimizer import OptimizationResult, ParameterGrid, optimize
 
@@ -26,6 +27,7 @@ class ResearchRun:
     finding: ResearchFinding
     evidence: ResearchEvidence
     manifest: ResearchManifest
+    experiment_id: str
 
 
 def run_research(
@@ -44,4 +46,5 @@ def run_research(
         train_ratio=train_ratio,
         data_fingerprint=data_fingerprint,
     )
-    return ResearchRun(tuple(results), finding, evidence, manifest)
+    experiment_id = build_experiment_id(manifest)
+    return ResearchRun(tuple(results), finding, evidence, manifest, experiment_id)
