@@ -6,8 +6,10 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ai.research_decision import build_research_decision
 from ai.research_pipeline import ResearchRun
 from ai.research_quality import assess_quality
+from analytics.research_decision_report import decision_to_dict
 from analytics.research_manifest import manifest_to_dict
 from analytics.research_report import candidate_summary
 
@@ -15,6 +17,7 @@ from analytics.research_report import candidate_summary
 def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
     """Convierte una corrida en un documento JSON estable y auditable."""
     quality = assess_quality(list(run.results))
+    decision = decision_to_dict(build_research_decision(run))
     return {
         "experiment_id": run.experiment_id,
         "manifest": manifest_to_dict(run.manifest),
@@ -37,6 +40,7 @@ def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
             "positive_both": quality.positive_both,
             "generalization_rate": quality.generalization_rate,
         },
+        "decision": decision,
         "candidates": candidate_summary(run.evidence.candidates),
     }
 
