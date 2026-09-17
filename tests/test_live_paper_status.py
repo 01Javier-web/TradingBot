@@ -25,13 +25,16 @@ def test_runner_status_reflects_virtual_engine(monkeypatch) -> None:
     monkeypatch.setattr("app.live_paper.get_candles", lambda *args, **kwargs: _rates())
     runner = LivePaperRunner(PaperTradingEngine(PaperPortfolio()), poll_seconds=1)
 
-    runner.process_once()
+    result = runner.process_once()
     status = runner.status()
 
+    assert "signal=WAIT" in result
     assert status.balance == 10_000
     assert status.equity == 10_000
+    assert status.unrealized_pnl == 0
+    assert status.position == "FLAT"
+    assert status.event_counts == {}
     assert status.kill_switch_active is False
-    assert status.event_counts
 
 
 def test_runner_status_reflects_kill_switch(monkeypatch) -> None:
