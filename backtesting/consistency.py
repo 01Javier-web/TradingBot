@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
-from backtesting.models import BacktestResult
+from backtesting.models import BacktestResult, PositionSide
 
 
 @dataclass(frozen=True)
@@ -26,8 +26,11 @@ def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
         issues.append("final_balance debe ser finito.")
     if not result.equity_curve:
         issues.append("La curva de equity no puede estar vacía.")
-    elif result.equity_curve[0] != result.initial_balance:
-        issues.append("La curva de equity debe comenzar con initial_balance.")
+    else:
+        if result.equity_curve[0] != result.initial_balance:
+            issues.append("La curva de equity debe comenzar con initial_balance.")
+        if result.equity_curve[-1] != result.final_balance:
+            issues.append("La curva de equity debe terminar con final_balance.")
 
     for index, value in enumerate(result.equity_curve, start=1):
         if not isfinite(value):
@@ -35,6 +38,8 @@ def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
 
     calculated = result.initial_balance
     for index, trade in enumerate(result.trades, start=1):
+        if not isinstance(trade.side, PositionSide):
+            issues.append(f"Trade {index}: side inválido.")
         if not all(
             isfinite(value)
             for value in (
@@ -46,13 +51,20 @@ def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
             )
         ):
             issues.append(f"Trade {index}: contiene valores no finitos.")
+        if trade.entry_price <= 0 or trade.exit_price <= 0:
+            issues.append(f"Trade {index}: los precios deben ser positivos.")
         if trade.quantity <= 0:
             issues.append(f"Trade {index}: quantity debe ser positiva.")
         if trade.costs < 0:
             issues.append(f"Trade {index}: costs no puede ser negativo.")
+        try:
+            if trade.entry_time >= trade.exit_time:
+                issues.append(f"Trade {index}: exit_time debe ser posterior a entry_time.")
+        except TypeError:
+            issues.append(f"Trade {index}: timestamps no comparables.")
         calculated += trade.net_pnl
 
-    if isfinite(result.final_balance) and calculated != result.final_balance:
+    if isfinite(result.final_balance) and abs(calculated - result.final_balance) > 1e-8:
         issues.append("final_balance no coincide con la suma de los resultados de las operaciones.")
 
     return BacktestConsistency(valid=not issues, issues=tuple(issues))
