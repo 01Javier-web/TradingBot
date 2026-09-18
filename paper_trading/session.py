@@ -20,6 +20,7 @@ class PaperSessionResult:
     rows: int
     events: tuple[dict[str, object], ...]
     report: PaperPerformanceReport
+    audit: PaperAuditResult
     mode: str = "simulation-first"
     execution_authorized: bool = False
 
@@ -56,10 +57,12 @@ class PaperTradingSession:
 
         self._executed = True
         report = self.engine.performance_report()
+        audit = audit_paper_events(self.engine.history)
         return PaperSessionResult(
             rows=len(enriched),
             events=tuple(dict(event) for event in self.engine.history),
             report=report,
+            audit=audit,
         )
 
 
