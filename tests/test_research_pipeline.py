@@ -13,7 +13,7 @@ def _data(rows: int = 80) -> pd.DataFrame:
             "time": pd.date_range("2026-01-01", periods=rows, freq="15min"),
             "open": close,
             "high": close + 1,
-            "low": close - 1,
+            "low": (close - 1).clip(lower=0.1),
             "close": close,
         }
     )
