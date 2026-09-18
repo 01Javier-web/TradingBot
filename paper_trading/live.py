@@ -12,7 +12,8 @@ from typing import Callable, Protocol
 
 import pandas as pd
 
-from paper_trading.guards import assert_simulation_only\nfrom paper_trading.session import PaperSessionResult, PaperTradingSession
+from paper_trading.guards import assert_simulation_only
+from paper_trading.session import PaperSessionResult, PaperTradingSession
 
 
 class MarketFeed(Protocol):
@@ -39,7 +40,8 @@ def run_bounded_paper_loop(
     interval_seconds: float = 0.0,
 ) -> LivePaperRun:
     """Lee un número finito de lotes y los procesa sin ejecución real."""
-    assert_simulation_only(execution_authorized=False, component="run_bounded_paper_loop")\n    if not symbol.strip():
+    assert_simulation_only(execution_authorized=False, component="run_bounded_paper_loop")
+    if not symbol.strip():
         raise ValueError("symbol no puede estar vacío")
     if timeframe <= 0 or polls <= 0 or count <= 0:
         raise ValueError("timeframe, polls y count deben ser mayores que 0")
