@@ -5,8 +5,8 @@ from analytics.paper_audit import audit_paper_events
 
 def test_audit_accepts_monotonic_structured_events() -> None:
     result = audit_paper_events([
-        {"sequence": 1, "action": "OPEN", "price": 100.0, "quantity": 1.0, "stop_loss": 98.0},
-        {"sequence": 2, "action": "CLOSE", "price": 102.0, "quantity": 1.0, "pnl": 2.0},
+        {"sequence": 1, "action": "OPEN", "side": "BUY", "price": 100.0, "quantity": 1.0, "stop_loss": 98.0},
+        {"sequence": 2, "action": "CLOSE", "side": "BUY", "price": 102.0, "quantity": 1.0, "pnl": 2.0},
     ])
 
     assert result.valid
