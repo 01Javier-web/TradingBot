@@ -49,7 +49,7 @@ def default_stress_scenarios() -> tuple[StressScenario, ...]:
         StressScenario(
             "kill_switch",
             _rows(((100.0, Signal.WAIT, 2.0),)),
-            ("STOPPED: Kill switch activo: emergency"),
+            ("STOPPED: Kill switch activo: emergency",),
         ),
         StressScenario(
             "risk_limit",
