@@ -20,6 +20,19 @@ class ParameterGrid:
     slow_ema_periods: tuple[int, ...] = (40, 50, 60)
     rsi_periods: tuple[int, ...] = (14,)
 
+    def __post_init__(self) -> None:
+        for name, values in (
+            ("fast_ema_periods", self.fast_ema_periods),
+            ("slow_ema_periods", self.slow_ema_periods),
+            ("rsi_periods", self.rsi_periods),
+        ):
+            if not values:
+                raise ValueError(f"{name} no puede estar vacío")
+            if any(not isinstance(value, int) or isinstance(value, bool) or value <= 0 for value in values):
+                raise ValueError(f"{name} debe contener enteros mayores que 0")
+        if not any(fast < slow for fast in self.fast_ema_periods for slow in self.slow_ema_periods):
+            raise ValueError("La cuadrícula no contiene combinaciones fast/slow válidas")
+
 
 @dataclass(frozen=True)
 class OptimizationResult:
