@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+
+import pandas as pd
 from typing import Iterable
 
 
@@ -24,6 +26,7 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
     issues: list[str] = []
     count = 0
     previous_sequence = 0
+    previous_time = None
     allowed_actions = {"OPEN", "CLOSE", "STOP_LOSS", "REJECTED", "KILL_SWITCH"}
 
     for count, event in enumerate(events, start=1):
@@ -36,6 +39,16 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
         if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence != previous_sequence + 1:
             issues.append(f"evento {count}: secuencia no monotónica")
         previous_sequence = sequence if isinstance(sequence, int) and not isinstance(sequence, bool) else previous_sequence
+
+        market_time = event.get("market_time")
+        if market_time is not None:
+            try:
+                current_time = pd.Timestamp(market_time)
+                if previous_time is not None and current_time < previous_time:
+                    issues.append(f"evento {count}: market_time retrocede")
+                previous_time = current_time
+            except (TypeError, ValueError):
+                issues.append(f"evento {count}: market_time inválido")
 
         action = event.get("action")
         if action not in allowed_actions:
