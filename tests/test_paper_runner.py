@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import app.paper_runner as runner
 
 
@@ -12,6 +14,7 @@ def test_parser_defaults() -> None:
 
 
 def test_main_reports_mt5_initialization_failure(monkeypatch, capsys) -> None:
+    monkeypatch.setattr(sys, "argv", ["paper_runner"])
     monkeypatch.setattr(runner, "initialize", lambda: False)
     monkeypatch.setattr(runner, "last_error", lambda: (-6, "Terminal: Authorization failed"))
 
