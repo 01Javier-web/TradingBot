@@ -10,14 +10,15 @@ from backtesting.models import BacktestResult
 def format_backtest_result(result: BacktestResult) -> str:
     """Genera un resumen humano sin ordenar ni seleccionar estrategias."""
     consistency = validate_backtest_result(result)
+    pnls = [trade.net_pnl for trade in result.trades]
     lines = [
         "=== TradingBot Backtest Report ===",
         f"Balance inicial: {result.initial_balance}",
         f"Balance final: {result.final_balance}",
         f"PnL neto: {result.net_pnl}",
         f"Operaciones: {len(result.trades)}",
-        f"Win rate: {win_rate(result.trades):.1%}",
-        f"Profit factor: {profit_factor(result.trades)}",
+        f"Win rate: {win_rate(pnls):.1%}",
+        f"Profit factor: {profit_factor(pnls)}",
         f"Max drawdown: {max_drawdown(result.equity_curve):.1%}",
         f"Consistencia: {'OK' if consistency.valid else 'ERROR'}",
     ]
