@@ -15,6 +15,7 @@ from backtesting.optimizer import ParameterGrid
 class ResearchManifest:
     """Describe el contexto necesario para repetir una investigación."""
 
+    schema_version: str
     rows: int
     train_ratio: float
     data_fingerprint: str
@@ -46,6 +47,7 @@ class ResearchManifest:
         ):
             raise ValueError("data_fingerprint debe ser SHA-256 hexadecimal")
         return cls(
+            schema_version="research-v1",
             rows=rows,
             train_ratio=float(train_ratio),
             data_fingerprint=data_fingerprint.lower(),
