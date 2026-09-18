@@ -110,3 +110,21 @@ def test_audit_rejects_invalid_market_time() -> None:
 
     assert result.valid is False
     assert "market_time inválido" in result.issues
+
+
+def test_audit_rejects_invalid_position_side() -> None:
+    result = audit_paper_events(
+        [
+            {
+                "sequence": 1,
+                "action": "OPEN",
+                "side": "HOLD",
+                "price": 100.0,
+                "quantity": 1.0,
+                "stop_loss": 98.0,
+            }
+        ]
+    )
+
+    assert result.valid is False
+    assert "OPEN side inválido" in result.issues
