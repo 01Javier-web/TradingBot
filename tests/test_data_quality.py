@@ -70,3 +70,10 @@ def test_input_dataframe_is_not_modified() -> None:
     validate_time_series(df)
 
     pd.testing.assert_frame_equal(df, original)
+
+
+def test_boolean_prices_are_rejected() -> None:
+    df = valid_data().assign(close=[101.0, True, 103.0])
+
+    with pytest.raises(ValueError, match="no booleanos"):
+        validate_time_series(df)
