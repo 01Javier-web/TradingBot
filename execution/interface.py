@@ -25,6 +25,8 @@ class ExecutionRequest:
     def __post_init__(self) -> None:
         if not isinstance(self.symbol, str) or not self.symbol.strip():
             raise ValueError("symbol no puede estar vacío")
+        if not isinstance(self.side, ExecutionSide):
+            raise ValueError("side debe ser ExecutionSide")
         if isinstance(self.quantity, bool) or not isfinite(float(self.quantity)) or self.quantity <= 0:
             raise ValueError("quantity debe ser finito y mayor que 0")
         if self.stop_loss is not None and (
