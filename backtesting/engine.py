@@ -23,7 +23,7 @@ class BacktestEngine:
         spread: float = 0.0,
     ) -> None:
         values = (initial_balance, quantity, commission, spread)
-        if any(isinstance(value, bool) for value in values):
+        if any(isinstance(value, bool) or not isinstance(value, (int, float)) for value in values):
             raise ValueError("Los parámetros de backtest deben ser numéricos")
         if not all(isfinite(float(value)) for value in values):
             raise ValueError("Los parámetros de backtest deben ser finitos")
