@@ -46,12 +46,17 @@ class PaperPortfolio:
         self.position = None
         return pnl
 
-    def unrealized_pnl(self, price: float) -> float:\n        """Devuelve solo el PnL no realizado de la posición actual."""\n        if not isfinite(price) or price <= 0:\n            raise ValueError("price debe ser finito y mayor que 0")\n        if self.position is None:\n            return 0.0\n        direction = 1 if self.position.side is PositionSide.BUY else -1\n        return (float(price) - self.position.entry_price) * direction * self.position.quantity\n\n    def mark_to_market(self, price: float) -> float:
-        """Calcula equity virtual sin cerrar la posición."""
+    def unrealized_pnl(self, price: float) -> float:
+        """Devuelve solo el PnL no realizado de la posición actual."""
         if not isfinite(price) or price <= 0:
             raise ValueError("price debe ser finito y mayor que 0")
         if self.position is None:
-            return self.balance
+            return 0.0
         direction = 1 if self.position.side is PositionSide.BUY else -1
-        unrealized = (float(price) - self.position.entry_price) * direction * self.position.quantity
-        return self.balance + unrealized
+        return (float(price) - self.position.entry_price) * direction * self.position.quantity
+
+    def mark_to_market(self, price: float) -> float:
+        """Calcula equity virtual sin cerrar la posición."""
+        if not isfinite(price) or price <= 0:
+            raise ValueError("price debe ser finito y mayor que 0")
+        return self.balance + self.unrealized_pnl(price)
