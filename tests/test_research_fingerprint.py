@@ -30,11 +30,11 @@ def test_data_change_produces_different_fingerprint() -> None:
     assert fingerprint_dataframe(original) != fingerprint_dataframe(changed)
 
 
-def test_row_order_is_part_of_the_fingerprint() -> None:
-    original = _data()
-    reordered = original.iloc[::-1].reset_index(drop=True)
+def test_non_chronological_row_order_is_rejected() -> None:
+    reordered = _data().iloc[::-1].reset_index(drop=True)
 
-    assert fingerprint_dataframe(original) != fingerprint_dataframe(reordered)
+    with pytest.raises(ValueError, match="estrictamente creciente"):
+        fingerprint_dataframe(reordered)
 
 
 def test_missing_required_column_is_rejected() -> None:
