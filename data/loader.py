@@ -7,9 +7,9 @@ from typing import Union
 
 import pandas as pd
 
-PathLike = Union[str, Path]
+from data.quality import validate_time_series
 
-REQUIRED_COLUMNS = ("time", "open", "high", "low", "close")
+PathLike = Union[str, Path]
 
 
 def load_csv(path: PathLike) -> pd.DataFrame:
@@ -23,24 +23,8 @@ def load_csv(path: PathLike) -> pd.DataFrame:
 
 
 def validate_market_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Valida columnas básicas y normaliza tiempo y orden de las velas."""
-    missing = [column for column in REQUIRED_COLUMNS if column not in df.columns]
-    if missing:
-        raise ValueError(f"Faltan columnas requeridas: {', '.join(missing)}")
+    """Valida OHLC y tiempo sin ordenar ni eliminar datos silenciosamente."""
+    return validate_time_series(df)
 
-    result = df.copy()
-    result["time"] = pd.to_datetime(result["time"], errors="coerce")
 
-    if result["time"].isna().any():
-        raise ValueError("La columna 'time' contiene fechas inválidas")
-
-    for column in ("open", "high", "low", "close"):
-        result[column] = pd.to_numeric(result[column], errors="coerce")
-
-    if result[["open", "high", "low", "close"]].isna().any().any():
-        raise ValueError("Los precios contienen valores no numéricos o vacíos")
-
-    if (result["high"] < result["low"]).any():
-        raise ValueError("Se encontraron velas con high menor que low")
-
-    return result.sort_values("time").drop_duplicates("time").reset_index(drop=True)
+__all__ = ["load_csv", "validate_market_data"]
