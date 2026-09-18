@@ -89,3 +89,17 @@ def test_optimization_result_rejects_non_finite_pnl() -> None:
     config = StrategyConfig(fast_ema_period=5, slow_ema_period=10)
     with pytest.raises(ValueError):
         OptimizationResult(config, float("nan"), 1.0)
+
+
+def test_backtest_consistency_rejects_overlapping_trades() -> None:
+    from backtesting.consistency import validate_backtest_result
+    first = Trade(pd.Timestamp("2026-01-01", tz="UTC"), pd.Timestamp("2026-01-03", tz="UTC"), PositionSide.BUY, 100, 101, 1, 1, 0)
+    second = Trade(pd.Timestamp("2026-01-02", tz="UTC"), pd.Timestamp("2026-01-04", tz="UTC"), PositionSide.SELL, 100, 99, 1, 1, 0)
+    result = object.__new__(BacktestResult)
+    object.__setattr__(result, "initial_balance", 100.0)
+    object.__setattr__(result, "final_balance", 102.0)
+    object.__setattr__(result, "trades", (first, second))
+    object.__setattr__(result, "equity_curve", (100.0, 102.0))
+    check = validate_backtest_result(result)
+    assert check.valid is False
+    assert any("solapa" in issue for issue in check.issues)
