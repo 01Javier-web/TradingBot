@@ -41,7 +41,7 @@ def test_non_finite_pnl_is_rejected() -> None:
 
 
 def test_test_windows_must_advance() -> None:
-    result = validate_walk_forward((_window(0), _window(1)))
+    result = validate_walk_forward((_window(0), _window(0)))
 
     assert result.valid is False
     assert any("avanzar estrictamente" in issue for issue in result.issues)
