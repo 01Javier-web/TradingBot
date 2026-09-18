@@ -19,7 +19,6 @@ def test_default_stress_suite_is_deterministic() -> None:
 
 def test_opposite_signal_closes_virtual_position() -> None:
     scenario = next(item for item in default_stress_scenarios() if item.name == "opposite_signal")
-
     result = run_stress_scenario(scenario)
 
     assert result[0] == "OPEN BUY"
@@ -29,7 +28,6 @@ def test_opposite_signal_closes_virtual_position() -> None:
 
 def test_kill_switch_prevents_market_action() -> None:
     scenario = next(item for item in default_stress_scenarios() if item.name == "kill_switch")
-
     result = run_stress_scenario(scenario)
 
     assert result == scenario.expected_actions
