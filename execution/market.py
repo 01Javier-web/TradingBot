@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from numbers import Integral
 
 import MetaTrader5 as mt5
 
@@ -11,7 +12,7 @@ class MT5MarketData:
     """Adaptador de solo lectura para ticks y velas de MT5."""
 
     def symbol_info(self, symbol: str):
-        if not symbol.strip():
+        if not isinstance(symbol, str) or not symbol.strip():
             raise ValueError("symbol no puede estar vacío")
         return mt5.symbol_info(symbol)
 
@@ -23,8 +24,8 @@ class MT5MarketData:
     def candles(self, symbol: str, timeframe: int, count: int = 100):
         if not symbol.strip():
             raise ValueError("symbol no puede estar vacío")
-        if count <= 0:
-            raise ValueError("count debe ser mayor que 0")
+        if isinstance(count, bool) or not isinstance(count, Integral) or count <= 0:
+            raise ValueError("count debe ser un entero mayor que 0")
         return mt5.copy_rates_from_pos(symbol, timeframe, 0, count)
 
     def candles_from(self, symbol: str, timeframe: int, start: datetime, count: int = 100):
