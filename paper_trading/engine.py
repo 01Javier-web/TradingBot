@@ -30,7 +30,6 @@ class TradingEvent:
     market_time: str | None = None
 
     def to_dict(self) -> dict[str, object]:
-        """Convierte el evento a un diccionario serializable."""
         return asdict(self)
 
 
@@ -38,8 +37,8 @@ class PaperTradingEngine:
     """Procesa velas secuencialmente sin enviar ninguna orden a MT5."""
 
     def __init__(self, portfolio: PaperPortfolio, risk_manager: RiskManager | None = None, quantity: float = 1.0, kill_switch: KillSwitch | None = None) -> None:
-        if not isfinite(quantity) or quantity <= 0:
-            raise ValueError("quantity debe ser finito y mayor que 0")
+        if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not isfinite(float(quantity)) or quantity <= 0:
+            raise ValueError("quantity debe ser numérico, finito y mayor que 0")
         self.portfolio = portfolio
         self.risk_manager = risk_manager or RiskManager()
         self.quantity = float(quantity)
@@ -49,18 +48,12 @@ class PaperTradingEngine:
         self._sequence = 0
 
     def _record(self, action: str, **kwargs: object) -> None:
-        """Registra un evento con secuencia monotónica."""
         self._sequence += 1
         event = TradingEvent(sequence=self._sequence, action=action, **kwargs)
         self.history.append(event.to_dict())
 
     def performance_report(self) -> PaperPerformanceReport:
-        """Genera el reporte de la sesión usando el balance inicial del portafolio."""
-        return build_paper_report(
-            self.portfolio,
-            self.history,
-            initial_balance=self.portfolio.initial_balance,
-        )
+        return build_paper_report(self.portfolio, self.history, initial_balance=self.portfolio.initial_balance)
 
     def process(self, row: pd.Series) -> str:
         """Procesa una vela; datos inválidos no generan acciones de mercado."""
@@ -101,14 +94,8 @@ class PaperTradingEngine:
             if hit_stop:
                 pnl = self.portfolio.close_position(position.stop_loss)
                 self.daily_loss += max(0.0, -pnl)
-                self._record(
-                    "STOP_LOSS",
-                    price=position.stop_loss,
-                    side=position.side.value,
-                    quantity=position.quantity,
-                    pnl=pnl,
-                    market_time=market_time,
-                )
+                self._record("STOP_LOSS", price=position.stop_loss, side=position.side.value,
+                             quantity=position.quantity, pnl=pnl, market_time=market_time)
                 return f"STOP_LOSS {position.side.value}: pnl={pnl:.6f}"
 
         signal = row.get("signal", Signal.WAIT)
@@ -129,10 +116,11 @@ class PaperTradingEngine:
             except (TypeError, ValueError):
                 self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
-            if not isfinite(raw_atr):
+            if not isfinite(raw_atr) or raw_atr <= 0:
                 self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
-            stop_distance = abs(raw_atr)
+
+            stop_distance = raw_atr
             decision = self.risk_manager.approve(
                 balance=self.portfolio.balance,
                 risk_amount=stop_distance * self.quantity,
@@ -143,20 +131,16 @@ class PaperTradingEngine:
             if not decision.approved:
                 self._record("REJECTED", reason=decision.reason, market_time=market_time)
                 return f"REJECTED: {decision.reason}"
+
             stop_loss = price - stop_distance if side is PositionSide.BUY else price + stop_distance
             if not isfinite(stop_loss) or stop_loss <= 0:
                 reason = "stop-loss calculado inválido"
                 self._record("REJECTED", reason=reason, market_time=market_time)
                 return f"REJECTED: {reason}"
+
             self.portfolio.open_position(side, price, self.quantity, stop_loss)
-            self._record(
-                "OPEN",
-                side=side.value,
-                price=price,
-                quantity=self.quantity,
-                stop_loss=stop_loss,
-                market_time=market_time,
-            )
+            self._record("OPEN", side=side.value, price=price, quantity=self.quantity,
+                         stop_loss=stop_loss, market_time=market_time)
             return f"OPEN {side.value}"
 
         if self.portfolio.position is not None and signal in (Signal.BUY, Signal.SELL):
@@ -164,14 +148,8 @@ class PaperTradingEngine:
             if signal.value != current.value:
                 pnl = self.portfolio.close_position(price)
                 self.daily_loss += max(0.0, -pnl)
-                self._record(
-                    "CLOSE",
-                    side=current.value,
-                    price=price,
-                    quantity=self.quantity,
-                    pnl=pnl,
-                    market_time=market_time,
-                )
+                self._record("CLOSE", side=current.value, price=price, quantity=self.quantity,
+                             pnl=pnl, market_time=market_time)
                 return f"CLOSE {current.value}: pnl={pnl:.6f}"
 
         return "WAIT"
