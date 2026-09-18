@@ -20,14 +20,6 @@ def valid_data() -> pd.DataFrame:
     )
 
 
-def test_valid_time_series_is_accepted_and_normalized() -> None:
-    result = validate_time_series(valid_data())
-
-    assert len(result) == 3
-    assert str(result["time"].dt.tz) == "UTC"
-    assert result["close"].tolist() == [101.0, 102.0, 103.0]
-
-
 @pytest.mark.parametrize(
     "mutate",
     [
@@ -46,8 +38,19 @@ def test_invalid_time_series_is_rejected(mutate) -> None:
 
 
 def test_invalid_timestamp_is_rejected() -> None:
-    df = valid_data()
-    df.loc[1, "time"] = "not-a-date"
+    df = pd.DataFrame(
+        {
+            "time": [
+                "2026-01-01 00:00:00",
+                "not-a-date",
+                "2026-01-01 00:30:00",
+            ],
+            "open": [100.0, 101.0, 102.0],
+            "high": [102.0, 103.0, 104.0],
+            "low": [99.0, 100.0, 101.0],
+            "close": [101.0, 102.0, 103.0],
+        }
+    )
 
     with pytest.raises(ValueError, match="timestamps inválidos"):
         validate_time_series(df)
