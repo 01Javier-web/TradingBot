@@ -20,13 +20,14 @@ def _data(rows: int = 10) -> pd.DataFrame:
 
 
 def test_chronological_split_preserves_order_and_boundary() -> None:
-    train, test = chronological_split(_data(), 0.7)
+    data = _data()
+    train, test = chronological_split(data, 0.7)
 
     assert len(train) == 7
     assert len(test) == 3
     assert train.iloc[-1]["time"] < test.iloc[0]["time"]
-    assert train.iloc[0]["time"] == _data().iloc[0]["time"]
-    assert test.iloc[-1]["time"] == _data().iloc[-1]["time"]
+    assert train.iloc[0]["time"] == pd.Timestamp(data.iloc[0]["time"], tz="UTC")
+    assert test.iloc[-1]["time"] == pd.Timestamp(data.iloc[-1]["time"], tz="UTC")
 
 
 @pytest.mark.parametrize("ratio", [0, 1, -0.1, 1.1])
