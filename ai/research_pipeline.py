@@ -49,8 +49,9 @@ class ResearchRun:
             raise ValueError("finding.experiments no coincide con results")
         if self.evidence.validation != validate_results(list(self.results)):
             raise ValueError("evidence.validation no coincide con results")
-        if not self.evidence.validation.valid:
-            raise ValueError("ResearchRun no puede contener resultados inválidos")
+        # Un ResearchRun producido por run_research será válido; se permite
+        # conservar evidencia inválida para que el gate de revisión humana
+        # pueda representar y auditar una investigación problemática.
 
 
 def run_research(
