@@ -27,9 +27,9 @@ def test_backtest_is_next_candle_entry() -> None:
     df = pd.DataFrame(
         {
             "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
-            "open": close + 100,
-            "high": close + 101,
-            "low": close + 99,
+            "open": close + 0.1,
+            "high": close + 1.0,
+            "low": (close - 1.0).clip(lower=0.1),
             "close": close,
         }
     )
@@ -45,9 +45,9 @@ def test_equity_curve_marks_open_positions_to_market_and_closes_at_end() -> None
     df = pd.DataFrame(
         {
             "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
-            "open": close + 100,
-            "high": close + 101,
-            "low": close + 99,
+            "open": close + 0.1,
+            "high": close + 1.0,
+            "low": (close - 1.0).clip(lower=0.1),
             "close": close,
         }
     )
