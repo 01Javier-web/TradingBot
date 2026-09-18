@@ -18,6 +18,8 @@ class BacktestConsistency:
 
 def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
     """Comprueba balances, curva de equity y operaciones sin alterar el resultado."""
+    if not isinstance(result, BacktestResult):
+        raise ValueError("result debe ser BacktestResult")
     issues: list[str] = []
 
     if not isfinite(result.initial_balance) or result.initial_balance <= 0:
@@ -37,6 +39,7 @@ def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
             issues.append(f"Equity {index}: valor no finito.")
 
     calculated = result.initial_balance
+    previous_exit = None
     for index, trade in enumerate(result.trades, start=1):
         if not isinstance(trade.side, PositionSide):
             issues.append(f"Trade {index}: side inválido.")
@@ -62,6 +65,13 @@ def validate_backtest_result(result: BacktestResult) -> BacktestConsistency:
                 issues.append(f"Trade {index}: exit_time debe ser posterior a entry_time.")
         except TypeError:
             issues.append(f"Trade {index}: timestamps no comparables.")
+        if previous_exit is not None:
+            try:
+                if trade.entry_time < previous_exit:
+                    issues.append(f"Trade {index}: se solapa temporalmente con la operación anterior.")
+            except TypeError:
+                issues.append(f"Trade {index}: timestamps no comparables.")
+        previous_exit = trade.exit_time
         calculated += trade.net_pnl
 
     if isfinite(result.final_balance) and abs(calculated - result.final_balance) > 1e-8:
