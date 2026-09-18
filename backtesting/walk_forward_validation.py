@@ -24,10 +24,10 @@ def validate_walk_forward(windows: tuple["WalkForwardWindow", ...]) -> WalkForwa
     issues: list[str] = []
 
     for index, window in enumerate(windows, start=1):
-        if window.train_start >= window.train_end:
-            issues.append(f"Ventana {index}: train debe contener al menos dos instantes ordenados.")
-        if window.test_start >= window.test_end:
-            issues.append(f"Ventana {index}: test debe contener al menos dos instantes ordenados.")
+        if window.train_start > window.train_end:
+            issues.append(f"Ventana {index}: train_start posterior a train_end.")
+        if window.test_start > window.test_end:
+            issues.append(f"Ventana {index}: test_start posterior a test_end.")
         if window.train_end >= window.test_start:
             issues.append(f"Ventana {index}: train y test se solapan o no respetan el orden temporal.")
         if not isfinite(float(window.test_pnl)):
