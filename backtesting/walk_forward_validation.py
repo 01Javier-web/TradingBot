@@ -23,6 +23,9 @@ def validate_walk_forward(windows: tuple["WalkForwardWindow", ...]) -> WalkForwa
     """Comprueba orden temporal, ventanas no vacías y PnL finito."""
     issues: list[str] = []
 
+    if not isinstance(windows, tuple):
+        return WalkForwardValidation(False, 0, ("windows debe ser una tupla.",))
+
     for index, window in enumerate(windows, start=1):
         if window.train_start > window.train_end:
             issues.append(f"Ventana {index}: train_start posterior a train_end.")
