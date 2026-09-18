@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
+from numbers import Real
 from typing import Protocol
 
 
@@ -27,12 +28,12 @@ class ExecutionRequest:
             raise ValueError("symbol no puede estar vacío")
         if not isinstance(self.side, ExecutionSide):
             raise ValueError("side debe ser ExecutionSide")
-        if isinstance(self.quantity, bool) or not isfinite(float(self.quantity)) or self.quantity <= 0:
-            raise ValueError("quantity debe ser finito y mayor que 0")
+        if isinstance(self.quantity, bool) or not isinstance(self.quantity, Real) or not isfinite(float(self.quantity)) or self.quantity <= 0:
+            raise ValueError("quantity debe ser numérico, finito y mayor que 0")
         if self.stop_loss is not None and (
-            isinstance(self.stop_loss, bool) or not isfinite(float(self.stop_loss)) or self.stop_loss <= 0
+            isinstance(self.stop_loss, bool) or not isinstance(self.stop_loss, Real) or not isfinite(float(self.stop_loss)) or self.stop_loss <= 0
         ):
-            raise ValueError("stop_loss debe ser finito y mayor que 0")
+            raise ValueError("stop_loss debe ser numérico, finito y mayor que 0")
 
 
 @dataclass(frozen=True)
