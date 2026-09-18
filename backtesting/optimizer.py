@@ -46,8 +46,11 @@ class OptimizationResult:
     def __post_init__(self) -> None:
         if not isinstance(self.config, StrategyConfig):
             raise ValueError("config debe ser StrategyConfig")
-        if any(isinstance(value, bool) or not isfinite(float(value)) for value in (self.train_pnl, self.test_pnl)):
-            raise ValueError("train_pnl y test_pnl deben ser finitos")
+        if any(
+            isinstance(value, bool) or not isinstance(value, (int, float))
+            for value in (self.train_pnl, self.test_pnl)
+        ):
+            raise ValueError("train_pnl y test_pnl deben ser numéricos")
 
 
 def optimize(df: pd.DataFrame, grid: ParameterGrid, train_ratio: float = 0.7) -> list[OptimizationResult]:
