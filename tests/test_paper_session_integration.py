@@ -31,7 +31,7 @@ def test_session_runs_full_signal_to_report_flow() -> None:
     assert result.events == tuple(session.engine.history)
     assert result.report.initial_balance == pytest.approx(10_000)
     assert result.report.consistent
-    assert result.report.final_balance == pytest.approx(portfolio.balance)
+    assert result.report.final_balance == pytest.approx(portfolio.balance)\n    assert result.audit.valid\n    assert result.audit.event_count == len(result.events)
 
 
 def test_session_rejects_invalid_market_data_before_processing() -> None:
