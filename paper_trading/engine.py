@@ -119,7 +119,7 @@ class PaperTradingEngine:
             except (TypeError, ValueError):
                 self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
-            if not isfinite(raw_atr) or raw_atr <= 0:
+            if not isfinite(raw_atr) or raw_atr < 0:
                 self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
 
