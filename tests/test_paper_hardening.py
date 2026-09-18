@@ -56,3 +56,14 @@ def test_live_loop_rejects_invalid_integer_fields(field: str) -> None:
             lambda: PaperTradingSession(PaperPortfolio()),
             **kwargs,
         )
+
+
+def test_paper_engine_rejects_present_but_invalid_market_time() -> None:
+    engine = PaperTradingEngine(PaperPortfolio())
+    result = engine.process(
+        pd.Series({"time": "not-a-timestamp", "close": 100.0, "atr": 1.0, "signal": Signal.BUY})
+    )
+
+    assert result == "WAIT: market_time inválido"
+    assert engine.history[-1]["action"] == "REJECTED"
+    assert engine.history[-1]["reason"] == "market_time inválido"
