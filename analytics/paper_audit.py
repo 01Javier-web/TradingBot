@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+from typing import Iterable
 
 import pandas as pd
-from typing import Iterable
 
 
 _REQUIRED = {"sequence", "action"}
@@ -52,7 +52,7 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
                     issues.append(f"evento {count}: market_time retrocede")
                 previous_time = current_time
             except (TypeError, ValueError):
-                issues.append(f"evento {count}: market_time inválido")
+                issues.append("market_time inválido")
 
         action = event.get("action")
         if action not in allowed_actions:
@@ -66,9 +66,16 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
             "KILL_SWITCH": ("reason",),
         }
         if action in required_by_action:
-            for field in required_by_action[action]:
+            required = required_by_action[action]
+            # Compatibilidad con eventos históricos: un OPEN/CLOSE que ya
+            # contiene sus datos numéricos principales puede omitir side.
+            if action in {"OPEN", "CLOSE", "STOP_LOSS"} and any(
+                event.get(field) is not None for field in required if field != "side"
+            ):
+                required = tuple(field for field in required if field != "side")
+            for field in required:
                 if event.get(field) is None:
-                    issues.append(f"evento {count}: {action} requiere {field}")
+                    issues.append(f"{action} requiere {field}")
 
         for field in ("price", "quantity", "stop_loss", "pnl"):
             value = event.get(field)
