@@ -58,6 +58,18 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
         if action not in allowed_actions:
             issues.append(f"evento {count}: acción no permitida")
 
+        required_by_action = {
+            "OPEN": ("side", "price", "quantity", "stop_loss"),
+            "CLOSE": ("side", "price", "quantity", "pnl"),
+            "STOP_LOSS": ("side", "price", "quantity", "pnl"),
+            "REJECTED": ("reason",),
+            "KILL_SWITCH": ("reason",),
+        }
+        if action in required_by_action:
+            for field in required_by_action[action]:
+                if event.get(field) is None:
+                    issues.append(f"evento {count}: {action} requiere {field}")
+
         for field in ("price", "quantity", "stop_loss", "pnl"):
             value = event.get(field)
             if value is not None:
