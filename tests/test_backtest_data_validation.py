@@ -42,3 +42,11 @@ def test_backtest_accepts_valid_market_data() -> None:
     # Con tres velas no se debe abrir una posición en la última vela para
     # evitar una operación artificial con entrada y salida simultáneas.
     assert result.final_balance == pytest.approx(10_000.0)
+
+
+def test_backtest_does_not_create_last_candle_entry() -> None:
+    data = valid_data()
+    result = BacktestEngine().run(data)
+
+    assert result.trades == ()
+    assert result.final_balance == pytest.approx(result.initial_balance)
