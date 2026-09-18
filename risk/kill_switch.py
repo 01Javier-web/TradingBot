@@ -13,16 +13,15 @@ class KillSwitch:
     reason: str | None = None
 
     def trigger(self, reason: str) -> None:
-        if not reason.strip():
-            raise ValueError("El motivo del kill switch no puede estar vacío")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("El motivo del kill switch debe ser texto no vacío")
         self.active = True
-        self.reason = reason
+        self.reason = reason.strip()
 
     def reset(self) -> None:
         self.active = False
         self.reason = None
 
     def check(self) -> None:
-        """Lanza una excepción si la ejecución debe detenerse."""
         if self.active:
             raise RuntimeError(f"Kill switch activo: {self.reason}")
