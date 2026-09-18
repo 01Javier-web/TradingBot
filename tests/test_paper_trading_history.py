@@ -14,18 +14,17 @@ def test_open_event_has_monotonic_sequence_and_trade_fields() -> None:
     result = engine.process(pd.Series({"close": 100.0, "atr": 1.0, "signal": Signal.BUY}))
 
     assert result == "OPEN BUY"
-    assert engine.history == [
-        {
-            "sequence": 1,
-            "action": "OPEN",
-            "price": 100.0,
-            "side": PositionSide.BUY.value,
-            "quantity": 1.0,
-            "stop_loss": 99.0,
-            "pnl": None,
-            "reason": None,
-        }
-    ]
+    assert engine.history == [{
+        "sequence": 1,
+        "action": "OPEN",
+        "price": 100.0,
+        "side": PositionSide.BUY.value,
+        "quantity": 1.0,
+        "stop_loss": 99.0,
+        "pnl": None,
+        "reason": None,
+        "market_time": None,
+    }]
 
 
 def test_rejection_is_structured_and_sequenced() -> None:
