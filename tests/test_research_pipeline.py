@@ -53,3 +53,13 @@ def test_research_pipeline_records_custom_train_ratio() -> None:
     )
 
     assert run.manifest.train_ratio == 0.75
+
+
+def test_research_pipeline_has_stable_experiment_identity() -> None:
+    grid = ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,), rsi_periods=(14,))
+    first = run_research(_data(), grid)
+    second = run_research(_data(), grid)
+
+    assert first.experiment_id == second.experiment_id
+    assert first.manifest.schema_version == "research-v1"
+
