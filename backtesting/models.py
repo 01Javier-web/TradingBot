@@ -78,6 +78,9 @@ class BacktestResult:
             raise ValueError("equity_curve debe terminar en final_balance")
         if any(not isinstance(trade, Trade) for trade in self.trades):
             raise ValueError("trades debe contener únicamente Trade")
+        expected_final = float(self.initial_balance) + sum(trade.net_pnl for trade in self.trades)
+        if abs(expected_final - float(self.final_balance)) > 1e-8:
+            raise ValueError("final_balance no coincide con initial_balance + PnL de trades")
 
     @property
     def net_pnl(self) -> float:
