@@ -21,6 +21,11 @@ def build_research_decision(
     walk_forward_validation: WalkForwardValidation | None = None,
 ) -> ResearchDecision:
     """Marca condiciones que requieren revisión sin recomendar operaciones."""
+    if not isinstance(run, ResearchRun):
+        raise ValueError("run debe ser ResearchRun")
+    if walk_forward_validation is not None and not isinstance(walk_forward_validation, WalkForwardValidation):
+        raise ValueError("walk_forward_validation debe ser WalkForwardValidation o None")
+
     reasons: list[str] = []
 
     if not run.evidence.validation.valid:
