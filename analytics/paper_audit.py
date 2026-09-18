@@ -10,6 +10,15 @@ import pandas as pd
 
 
 _REQUIRED = {"sequence", "action"}
+_ALLOWED_ACTIONS = {"OPEN", "CLOSE", "STOP_LOSS", "REJECTED", "KILL_SWITCH"}
+_ALLOWED_SIDES = {"BUY", "SELL"}
+_REQUIRED_BY_ACTION = {
+    "OPEN": ("side", "price", "quantity", "stop_loss"),
+    "CLOSE": ("side", "price", "quantity", "pnl"),
+    "STOP_LOSS": ("side", "price", "quantity", "pnl"),
+    "REJECTED": ("reason",),
+    "KILL_SWITCH": ("reason",),
+}
 
 
 @dataclass(frozen=True)
@@ -22,14 +31,17 @@ class PaperAuditResult:
 
 
 def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
-    """Comprueba secuencia, acciones y campos numéricos sin alterar eventos."""
+    """Comprueba secuencia, esquema, tiempos y valores numéricos."""
     issues: list[str] = []
     count = 0
     previous_sequence = 0
     previous_time = None
-    allowed_actions = {"OPEN", "CLOSE", "STOP_LOSS", "REJECTED", "KILL_SWITCH"}
 
     for count, event in enumerate(events, start=1):
+        if not isinstance(event, dict):
+            issues.append(f"evento {count}: debe ser un objeto")
+            continue
+
         missing = _REQUIRED - set(event)
         if missing:
             issues.append(f"evento {count}: faltan campos {sorted(missing)}")
@@ -38,7 +50,8 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
         sequence = event.get("sequence")
         if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence != previous_sequence + 1:
             issues.append(f"evento {count}: secuencia no monotónica")
-        previous_sequence = sequence if isinstance(sequence, int) and not isinstance(sequence, bool) else previous_sequence
+        if isinstance(sequence, int) and not isinstance(sequence, bool):
+            previous_sequence = sequence
 
         market_time = event.get("market_time")
         if market_time is not None:
@@ -55,37 +68,35 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
                 issues.append("market_time inválido")
 
         action = event.get("action")
-        if action not in allowed_actions:
+        if action not in _ALLOWED_ACTIONS:
             issues.append(f"evento {count}: acción no permitida")
+            continue
 
-        required_by_action = {
-            "OPEN": ("side", "price", "quantity", "stop_loss"),
-            "CLOSE": ("side", "price", "quantity", "pnl"),
-            "STOP_LOSS": ("side", "price", "quantity", "pnl"),
-            "REJECTED": ("reason",),
-            "KILL_SWITCH": ("reason",),
-        }
-        if action in required_by_action:
-            for field in required_by_action[action]:
-                if event.get(field) is None:
-                    issues.append(f"{action} requiere {field}")
+        for field in _REQUIRED_BY_ACTION[action]:
+            if event.get(field) is None:
+                issues.append(f"{action} requiere {field}")
+
+        if action in {"OPEN", "CLOSE", "STOP_LOSS"}:
+            side = event.get("side")
+            if side is not None and side not in _ALLOWED_SIDES:
+                issues.append(f"{action} side inválido")
 
         for field in ("price", "quantity", "stop_loss", "pnl"):
             value = event.get(field)
-            if value is not None:
-                try:
-                    numeric = float(value)
-                except (TypeError, ValueError):
-                    issues.append(f"evento {count}: {field} no numérico")
-                    continue
-                if not isfinite(numeric):
-                    issues.append(f"evento {count}: {field} no finito")
+            if value is None:
+                continue
+            if isinstance(value, bool):
+                issues.append(f"evento {count}: {field} no numérico")
+                continue
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                issues.append(f"evento {count}: {field} no numérico")
+                continue
+            if not isfinite(numeric):
+                issues.append(f"evento {count}: {field} no finito")
 
-    return PaperAuditResult(
-        valid=not issues,
-        event_count=count,
-        issues=tuple(issues),
-    )
+    return PaperAuditResult(valid=not issues, event_count=count, issues=tuple(issues))
 
 
 __all__ = ["PaperAuditResult", "audit_paper_events"]
