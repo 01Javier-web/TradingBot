@@ -36,6 +36,17 @@ class Trade:
             raise ValueError("Los campos numéricos del trade deben ser numéricos")
         if not all(isfinite(float(value)) for value in numeric):
             raise ValueError("Los campos numéricos del trade deben ser finitos")
+        if self.entry_price <= 0 or self.exit_price <= 0:
+            raise ValueError("Los precios del trade deben ser positivos")
+        if self.quantity <= 0:
+            raise ValueError("quantity debe ser positiva")
+        if self.costs < 0:
+            raise ValueError("costs no puede ser negativo")
+        try:
+            if self.entry_time >= self.exit_time:
+                raise ValueError("exit_time debe ser posterior a entry_time")
+        except TypeError as exc:
+            raise ValueError("timestamps del trade no son comparables") from exc
 
     @property
     def net_pnl(self) -> float:
@@ -69,6 +80,15 @@ class BacktestResult:
             raise ValueError("equity_curve debe contener valores finitos")
         if any(not isinstance(trade, Trade) for trade in self.trades):
             raise ValueError("trades debe contener únicamente Trade")
+        if self.initial_balance <= 0:
+            raise ValueError("initial_balance debe ser positivo")
+        if self.equity_curve[0] != self.initial_balance:
+            raise ValueError("La curva de equity debe comenzar con initial_balance")
+        if self.equity_curve[-1] != self.final_balance:
+            raise ValueError("La curva de equity debe terminar con final_balance")
+        calculated = self.initial_balance + sum(trade.net_pnl for trade in self.trades)
+        if abs(calculated - self.final_balance) > 1e-8:
+            raise ValueError("final_balance no coincide con la suma de los resultados de las operaciones")
 
     @property
     def net_pnl(self) -> float:
