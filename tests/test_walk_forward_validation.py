@@ -53,3 +53,9 @@ def test_empty_walk_forward_is_valid_but_contains_no_windows() -> None:
     assert result.valid is True
     assert result.windows == 0
     assert result.issues == ()
+
+
+def test_non_tuple_windows_are_rejected() -> None:
+    result = validate_walk_forward([])  # type: ignore[arg-type]
+    assert result.valid is False
+    assert "tupla" in result.issues[0]
