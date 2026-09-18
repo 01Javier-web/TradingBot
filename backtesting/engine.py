@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import isfinite
+
 import pandas as pd
 
 from backtesting.models import BacktestResult, PositionSide, Trade
@@ -20,6 +22,9 @@ class BacktestEngine:
         commission: float = 0.0,
         spread: float = 0.0,
     ) -> None:
+        values = (initial_balance, quantity, commission, spread)
+        if not all(isfinite(float(value)) for value in values):
+            raise ValueError("Los parámetros de backtest deben ser finitos")
         if initial_balance <= 0 or quantity <= 0 or commission < 0 or spread < 0:
             raise ValueError("Parámetros de backtest inválidos")
         self.initial_balance = float(initial_balance)
@@ -50,6 +55,7 @@ class BacktestEngine:
         for i in range(len(data) - 1):
             signal = data.loc[i, "signal"]
             next_price = float(data.loc[i + 1, "open"])
+            next_close = float(data.loc[i + 1, "close"])
             next_time = data.loc[i + 1, "time"]
 
             if position is None and signal in (Signal.BUY, Signal.SELL):
@@ -71,7 +77,6 @@ class BacktestEngine:
                 )
                 direction = 1 if position is PositionSide.BUY else -1
                 gross = (exit_price - entry_price) * direction * self.quantity
-                costs = self.commission
                 trade = Trade(
                     entry_time,
                     next_time,
@@ -80,12 +85,18 @@ class BacktestEngine:
                     exit_price,
                     self.quantity,
                     gross,
-                    costs,
+                    self.commission,
                 )
                 balance += trade.net_pnl
                 trades.append(trade)
                 position = None
+
+            if position is None:
                 equity.append(balance)
+            else:
+                direction = 1 if position is PositionSide.BUY else -1
+                unrealized = (next_close - entry_price) * direction * self.quantity
+                equity.append(balance + unrealized)
 
         # Cierre forzoso al último close solo para cerrar la simulación.
         if position is not None:
@@ -104,7 +115,9 @@ class BacktestEngine:
             )
             balance += trade.net_pnl
             trades.append(trade)
-            equity.append(balance)
+            equity[-1] = balance
+        elif equity[-1] != balance:
+            equity[-1] = balance
 
         return BacktestResult(
             self.initial_balance,
