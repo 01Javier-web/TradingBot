@@ -8,6 +8,7 @@ import pandas as pd
 
 from data.quality import validate_time_series
 from paper_trading.engine import PaperTradingEngine
+from strategy.signals import StrategyConfig, generate_signals
 
 
 @dataclass(frozen=True)
@@ -23,8 +24,13 @@ class StreamBatch:
 class PaperTradingStream:
     """Consume snapshots repetidos sin reprocesar velas ya vistas."""
 
-    def __init__(self, engine: PaperTradingEngine) -> None:
+    def __init__(
+        self,
+        engine: PaperTradingEngine,
+        config: StrategyConfig | None = None,
+    ) -> None:
         self.engine = engine
+        self.config = config or StrategyConfig()
         self._last_time: pd.Timestamp | None = None
         self._processed_rows = 0
 
@@ -32,23 +38,31 @@ class PaperTradingStream:
     def last_time(self) -> pd.Timestamp | None:
         return self._last_time
 
+    @property
+    def processed_rows(self) -> int:
+        return self._processed_rows
+
     def ingest(self, df: pd.DataFrame) -> StreamBatch:
-        """Valida un snapshot y procesa únicamente velas nuevas."""
+        """Valida un snapshot, calcula señales y procesa únicamente velas nuevas."""
         data = validate_time_series(df)
         if self._last_time is not None:
             data = data[data["time"] > self._last_time].copy()
 
         before = len(self.engine.history)
-        for _, row in data.iterrows():
-            self.engine.process(row)
-
         if not data.empty:
+            enriched = generate_signals(data, self.config)
+            for _, row in enriched.iterrows():
+                self.engine.process(row)
             self._last_time = data["time"].iloc[-1]
-        self._processed_rows += len(data)
+            processed = len(data)
+        else:
+            processed = 0
+
+        self._processed_rows += processed
 
         return StreamBatch(
             rows_received=len(df),
-            rows_processed=len(data),
+            rows_processed=processed,
             events_created=len(self.engine.history) - before,
             last_time=self._last_time,
         )
