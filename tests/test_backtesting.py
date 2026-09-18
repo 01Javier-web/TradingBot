@@ -35,7 +35,7 @@ def test_backtest_is_next_candle_entry() -> None:
     )
     result = BacktestEngine(quantity=1).run(df)
     assert result.trades
-    assert result.trades[0].entry_time == df.loc[2, "time"]
+    assert result.trades[0].entry_time == pd.Timestamp(df.loc[2, "time"], tz="UTC")
     assert result.trades[0].entry_price == pytest.approx(df.loc[2, "open"])
 
 
