@@ -25,6 +25,10 @@ def classify_consistency(results: list[OptimizationResult]) -> tuple[ResearchCan
     El orden original se conserva deliberadamente para evitar introducir una
     clasificación implícita por rentabilidad.
     """
+    if not isinstance(results, list):
+        raise ValueError("results debe ser una lista")
+    if any(not isinstance(result, OptimizationResult) for result in results):
+        raise ValueError("Todos los resultados deben ser OptimizationResult")
     return tuple(
         ResearchCandidate(
             result=result,
