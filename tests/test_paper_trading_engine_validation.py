@@ -19,7 +19,9 @@ def test_invalid_price_is_rejected_without_action() -> None:
 
     assert result == "WAIT: precio inválido"
     assert engine.portfolio.position is None
-    assert engine.history[-1] == {"action": "REJECTED", "reason": "precio inválido"}
+    assert engine.history[-1]["action"] == "REJECTED"
+    assert engine.history[-1]["reason"] == "precio inválido"
+    assert engine.history[-1]["sequence"] == 1
 
 
 def test_invalid_signal_type_is_rejected() -> None:
