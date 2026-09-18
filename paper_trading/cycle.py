@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from data.quality import validate_time_series
+from paper_trading.guards import assert_simulation_only
 from paper_trading.session import PaperSessionResult, PaperTradingSession
 
 
@@ -22,6 +23,7 @@ class PaperCycleResult:
 
 def run_paper_cycle(df: pd.DataFrame, session: PaperTradingSession) -> PaperCycleResult:
     """Valida y procesa un lote completo de velas sin ninguna ejecución real."""
+    assert_simulation_only(execution_authorized=False, component="run_paper_cycle")
     data = validate_time_series(df)
     result = session.run(data)
     return PaperCycleResult(
