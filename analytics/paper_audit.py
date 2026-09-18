@@ -44,6 +44,10 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
         if market_time is not None:
             try:
                 current_time = pd.Timestamp(market_time)
+                if current_time.tzinfo is None:
+                    current_time = current_time.tz_localize("UTC")
+                else:
+                    current_time = current_time.tz_convert("UTC")
                 if previous_time is not None and current_time < previous_time:
                     issues.append(f"evento {count}: market_time retrocede")
                 previous_time = current_time
