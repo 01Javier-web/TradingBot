@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from analytics.paper_audit import PaperAuditResult, audit_paper_events\nfrom analytics.paper_report import PaperPerformanceReport
+from analytics.paper_audit import PaperAuditResult, audit_paper_events
+from analytics.paper_report import PaperPerformanceReport
 from data.quality import validate_time_series
 from paper_trading.engine import PaperTradingEngine
 from paper_trading.portfolio import PaperPortfolio
