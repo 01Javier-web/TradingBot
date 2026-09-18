@@ -52,3 +52,12 @@ def test_save_research_run_writes_valid_json(tmp_path: Path) -> None:
     assert '"finding"' in content
     assert '"quality"' in content
     assert '"decision"' in content
+
+
+def test_research_json_is_deterministic(tmp_path: Path) -> None:
+    run = _run()
+    path = tmp_path / "run.json"
+    save_research_run(run, path)
+    first = path.read_text(encoding="utf-8")
+    save_research_run(run, path)
+    assert path.read_text(encoding="utf-8") == first
