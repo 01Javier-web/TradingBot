@@ -51,6 +51,8 @@ class OptimizationResult:
             for value in (self.train_pnl, self.test_pnl)
         ):
             raise ValueError("train_pnl y test_pnl deben ser numéricos")
+        if not all(isfinite(float(value)) for value in (self.train_pnl, self.test_pnl)):
+            raise ValueError("train_pnl y test_pnl deben ser finitos")
 
 
 def optimize(df: pd.DataFrame, grid: ParameterGrid, train_ratio: float = 0.7) -> list[OptimizationResult]:
