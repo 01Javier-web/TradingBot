@@ -3,9 +3,21 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import asdict
 
 from paper_trading.session import PaperSessionResult
+
+
+def _json_safe(value: object) -> object:
+    """Normaliza valores no finitos para producir JSON estándar."""
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    if isinstance(value, dict):
+        return {key: _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return value
 
 
 def paper_session_to_dict(result: PaperSessionResult) -> dict[str, object]:
@@ -14,7 +26,7 @@ def paper_session_to_dict(result: PaperSessionResult) -> dict[str, object]:
     payload["events"] = [dict(event) for event in result.events]
     payload["report"] = asdict(result.report)
     payload["audit"] = asdict(result.audit)
-    return payload
+    return _json_safe(payload)  # type: ignore[return-value]
 
 
 def paper_session_to_json(result: PaperSessionResult) -> str:
