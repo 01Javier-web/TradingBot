@@ -25,7 +25,7 @@ def test_same_data_produces_same_fingerprint() -> None:
 def test_data_change_produces_different_fingerprint() -> None:
     original = _data()
     changed = _data()
-    changed.loc[1, "close"] = 99.0
+    changed.loc[1, "open"] = 2.25
 
     assert fingerprint_dataframe(original) != fingerprint_dataframe(changed)
 
