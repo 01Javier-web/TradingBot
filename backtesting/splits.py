@@ -4,16 +4,23 @@ from __future__ import annotations
 
 import pandas as pd
 
+from data.quality import validate_time_series
 
-def chronological_split(df: pd.DataFrame, train_ratio: float = 0.7) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Divide datos sin mezclar el futuro con el pasado."""
+
+def chronological_split(
+    df: pd.DataFrame,
+    train_ratio: float = 0.7,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Divide datos validados sin mezclar el futuro con el pasado."""
     if not 0 < train_ratio < 1:
         raise ValueError("train_ratio debe estar entre 0 y 1")
-    if len(df) < 2:
+    data = validate_time_series(df)
+    if len(data) < 2:
         raise ValueError("Se requieren al menos 2 filas")
-    if "time" not in df.columns or not df["time"].is_monotonic_increasing:
-        raise ValueError("Los datos deben tener timestamps ordenados")
 
-    cut = int(len(df) * train_ratio)
-    cut = max(1, min(cut, len(df) - 1))
-    return df.iloc[:cut].copy(), df.iloc[cut:].copy()
+    cut = int(len(data) * train_ratio)
+    cut = max(1, min(cut, len(data) - 1))
+    return data.iloc[:cut].copy(), data.iloc[cut:].copy()
+
+
+__all__ = ["chronological_split"]
