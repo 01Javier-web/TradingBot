@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from math import isfinite
 from typing import Protocol
 
 
@@ -22,12 +23,14 @@ class ExecutionRequest:
     stop_loss: float | None = None
 
     def __post_init__(self) -> None:
-        if not self.symbol.strip():
+        if not isinstance(self.symbol, str) or not self.symbol.strip():
             raise ValueError("symbol no puede estar vacío")
-        if self.quantity <= 0:
-            raise ValueError("quantity debe ser mayor que 0")
-        if self.stop_loss is not None and self.stop_loss <= 0:
-            raise ValueError("stop_loss debe ser mayor que 0")
+        if isinstance(self.quantity, bool) or not isfinite(float(self.quantity)) or self.quantity <= 0:
+            raise ValueError("quantity debe ser finito y mayor que 0")
+        if self.stop_loss is not None and (
+            isinstance(self.stop_loss, bool) or not isfinite(float(self.stop_loss)) or self.stop_loss <= 0
+        ):
+            raise ValueError("stop_loss debe ser finito y mayor que 0")
 
 
 @dataclass(frozen=True)
