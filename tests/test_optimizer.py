@@ -5,6 +5,9 @@ import pandas as pd
 from backtesting.optimizer import ParameterGrid, optimize
 
 
+import pytest
+
+
 def make_data() -> pd.DataFrame:
     close = [100 + i * 0.15 for i in range(100)]
     return pd.DataFrame(
@@ -16,6 +19,18 @@ def make_data() -> pd.DataFrame:
             "close": close,
         }
     )
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"fast_ema_periods": ()},
+    {"slow_ema_periods": ()},
+    {"rsi_periods": ()},
+    {"fast_ema_periods": (0,)},
+    {"rsi_periods": (True,)},
+])
+def test_invalid_parameter_grid_is_rejected(kwargs: dict) -> None:
+    with pytest.raises(ValueError):
+        ParameterGrid(**kwargs)
 
 
 def test_optimizer_evaluates_valid_combinations_on_train_and_test() -> None:
