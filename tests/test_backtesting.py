@@ -5,11 +5,18 @@ import pytest
 
 from backtesting.engine import BacktestEngine
 from backtesting.metrics import max_drawdown, profit_factor, win_rate
-from strategy.signals import Signal
 
 
 def test_backtest_rejects_unsorted_data() -> None:
-    df = pd.DataFrame({"time": pd.to_datetime(["2026-01-02", "2026-01-01"]), "open": [2, 1], "high": [3, 2], "low": [1, 0], "close": [2, 1]})
+    df = pd.DataFrame(
+        {
+            "time": pd.to_datetime(["2026-01-02", "2026-01-01"]),
+            "open": [2, 1],
+            "high": [3, 2],
+            "low": [1, 0],
+            "close": [2, 1],
+        }
+    )
     with pytest.raises(ValueError):
         BacktestEngine().run(df)
 
@@ -17,18 +24,55 @@ def test_backtest_rejects_unsorted_data() -> None:
 def test_backtest_is_next_candle_entry() -> None:
     rows = 80
     close = pd.Series(range(1, rows + 1), dtype=float)
-    df = pd.DataFrame({
-        "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
-        "open": close + 100,
-        "high": close + 101,
-        "low": close + 99,
-        "close": close,
-    })
+    df = pd.DataFrame(
+        {
+            "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
+            "open": close + 100,
+            "high": close + 101,
+            "low": close + 99,
+            "close": close,
+        }
+    )
     result = BacktestEngine(quantity=1).run(df)
     assert result.trades
-    # La primera señal válida aparece en la vela 1; la entrada debe ocurrir en la siguiente.
     assert result.trades[0].entry_time == df.loc[2, "time"]
     assert result.trades[0].entry_price == pytest.approx(df.loc[2, "open"])
+
+
+def test_equity_curve_marks_open_positions_to_market_and_closes_at_end() -> None:
+    rows = 80
+    close = pd.Series(range(1, rows + 1), dtype=float)
+    df = pd.DataFrame(
+        {
+            "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
+            "open": close + 100,
+            "high": close + 101,
+            "low": close + 99,
+            "close": close,
+        }
+    )
+
+    result = BacktestEngine(quantity=1).run(df)
+
+    assert len(result.equity_curve) == len(df)
+    assert result.equity_curve[0] == pytest.approx(result.initial_balance)
+    assert result.equity_curve[-1] == pytest.approx(result.final_balance)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"initial_balance": float("nan")},
+        {"quantity": float("inf")},
+        {"commission": float("nan")},
+        {"spread": float("inf")},
+        {"commission": -0.1},
+        {"spread": -0.1},
+    ],
+)
+def test_backtest_rejects_invalid_cost_or_balance_parameters(kwargs: dict[str, float]) -> None:
+    with pytest.raises(ValueError):
+        BacktestEngine(**kwargs)
 
 
 def test_metrics() -> None:
