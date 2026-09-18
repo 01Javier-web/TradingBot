@@ -9,6 +9,16 @@ def _result() -> BacktestResult:
     return BacktestResult(100.0, 101.5, (trade,), (100.0, 101.5))
 
 
+def _invalid_result() -> BacktestResult:
+    result = _result()
+    invalid = object.__new__(BacktestResult)
+    object.__setattr__(invalid, "initial_balance", result.initial_balance)
+    object.__setattr__(invalid, "final_balance", 999.0)
+    object.__setattr__(invalid, "trades", result.trades)
+    object.__setattr__(invalid, "equity_curve", result.equity_curve)
+    return invalid
+
+
 def test_backtest_report_contains_core_metrics() -> None:
     report = backtest_to_dict(_result())
 
@@ -29,10 +39,7 @@ def test_backtest_report_exposes_consistency_status() -> None:
 
 
 def test_backtest_report_preserves_consistency_issues() -> None:
-    result = _result()
-    invalid = BacktestResult(result.initial_balance, 999.0, result.trades, result.equity_curve)
-
-    report = backtest_to_dict(invalid)
+    report = backtest_to_dict(_invalid_result())
 
     assert report["consistency"]["valid"] is False
     assert any("no coincide" in issue for issue in report["consistency"]["issues"])
