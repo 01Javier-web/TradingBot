@@ -100,6 +100,6 @@ def save_manifest(manifest: ResearchManifest, path: str | Path) -> None:
         raise ValueError("path debe apuntar a un archivo")
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(
-        json.dumps(manifest_to_dict(manifest), indent=2, ensure_ascii=False),
+        json.dumps(manifest_to_dict(manifest), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False),
         encoding="utf-8",
     )
