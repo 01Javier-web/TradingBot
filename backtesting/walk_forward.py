@@ -29,7 +29,12 @@ def walk_forward(
     test_size: int,
     step: int | None = None,
 ) -> tuple[WalkForwardWindow, ...]:
-    """Ejecuta ventanas temporales consecutivas sin mezclar futuro y pasado."""
+    """Evalúa una configuración fija sobre ventanas test cronológicas.
+
+    El tramo train se conserva como contexto temporal y no se usa para ajustar
+    parámetros. Esta función es una evaluación temporal walk-forward de una
+    configuración ya definida, no un optimizador walk-forward automático.
+    """
     sizes = (train_size, test_size)
     if any(isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in sizes):
         raise ValueError("train_size y test_size deben ser enteros mayores que 0")
