@@ -67,4 +67,5 @@ def test_loop_rejects_non_session_factory_result() -> None:
             lambda: object(),
             symbol="TEST",
             timeframe=15,
+            count=25,
         )
