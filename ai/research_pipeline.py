@@ -31,10 +31,26 @@ class ResearchRun:
     experiment_id: str
 
     def __post_init__(self) -> None:
-        if not self.experiment_id or len(self.experiment_id) != 64:
+        if not isinstance(self.results, tuple) or any(not isinstance(result, OptimizationResult) for result in self.results):
+            raise ValueError("results debe ser una tupla de OptimizationResult")
+        if not isinstance(self.finding, ResearchFinding):
+            raise ValueError("finding debe ser ResearchFinding")
+        if not isinstance(self.evidence, ResearchEvidence):
+            raise ValueError("evidence debe ser ResearchEvidence")
+        if not isinstance(self.manifest, ResearchManifest):
+            raise ValueError("manifest debe ser ResearchManifest")
+        if not isinstance(self.experiment_id, str) or len(self.experiment_id) != 64:
             raise ValueError("experiment_id debe ser SHA-256 hexadecimal")
         if any(char not in "0123456789abcdef" for char in self.experiment_id.lower()):
             raise ValueError("experiment_id debe ser hexadecimal")
+        if self.experiment_id != build_experiment_id(self.manifest):
+            raise ValueError("experiment_id no corresponde al manifiesto")
+        if self.finding.experiments != len(self.results):
+            raise ValueError("finding.experiments no coincide con results")
+        if self.evidence.validation != validate_results(list(self.results)):
+            raise ValueError("evidence.validation no coincide con results")
+        if not self.evidence.validation.valid:
+            raise ValueError("ResearchRun no puede contener resultados inválidos")
 
 
 def run_research(
