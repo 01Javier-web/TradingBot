@@ -30,6 +30,8 @@ def validate_time_series(df: pd.DataFrame) -> pd.DataFrame:
 
     price_columns = list(REQUIRED_OHLC[1:])
     for column in price_columns:
+        if result[column].map(lambda value: isinstance(value, bool)).any():
+            raise ValueError("Los precios deben ser numéricos, no booleanos")
         result[column] = pd.to_numeric(result[column], errors="coerce")
 
     if result[price_columns].isna().any().any():
