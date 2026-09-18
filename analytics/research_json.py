@@ -50,6 +50,6 @@ def save_research_run(run: ResearchRun, path: str | Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(
-        json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False),
+        json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False),
         encoding="utf-8",
     )
