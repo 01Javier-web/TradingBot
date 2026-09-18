@@ -48,7 +48,7 @@ def save_research_record(
     destination = Path(directory)
     destination.mkdir(parents=True, exist_ok=True)
     path = destination / f"{run.experiment_id}.json"
-    content = json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False)
+    content = json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False)
 
     if path.exists() and not overwrite:
         existing = path.read_text(encoding="utf-8")
