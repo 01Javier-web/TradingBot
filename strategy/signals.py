@@ -86,7 +86,11 @@ def generate_signal(row: pd.Series, config: StrategyConfig | None = None) -> Sig
 
 
 def generate_signals(df: pd.DataFrame, config: StrategyConfig | None = None) -> pd.DataFrame:
-    """Devuelve el DataFrame con indicadores y una columna ``signal``."""
+    """Genera señales usando solo información disponible hasta cada vela.
+
+    El backtest consume la señal de la vela ``i`` y ejecuta la entrada/salida
+    en la apertura de ``i + 1``, evitando usar precios futuros para decidir.
+    """
     config = config or StrategyConfig()
     result = add_indicators(df, config)
     result["signal"] = result.apply(generate_signal, axis=1, config=config)
