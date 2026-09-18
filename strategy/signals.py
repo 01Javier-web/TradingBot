@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from math import isfinite
+from numbers import Real
 
 import pandas as pd
 
@@ -108,6 +110,9 @@ def _validate_config(config: StrategyConfig) -> None:
         raise ValueError("Los periodos deben ser enteros mayores que 0")
     if config.fast_ema_period >= config.slow_ema_period:
         raise ValueError("fast_ema_period debe ser menor que slow_ema_period")
+    levels = (config.rsi_buy_level, config.rsi_sell_level, config.min_atr)
+    if any(not isinstance(value, Real) or isinstance(value, bool) or not isfinite(float(value)) for value in levels):
+        raise ValueError("Los niveles RSI y min_atr deben ser numéricos y finitos")
     if not 0 <= config.rsi_buy_level <= 100 or not 0 <= config.rsi_sell_level <= 100:
         raise ValueError("Los niveles RSI deben estar entre 0 y 100")
     if config.min_atr < 0:
