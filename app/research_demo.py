@@ -16,12 +16,13 @@ def synthetic_data(rows: int = 160) -> pd.DataFrame:
     if rows < 2:
         raise ValueError("rows debe ser al menos 2")
     close = pd.Series(range(1, rows + 1), dtype=float)
+    low = (close - 1).clip(lower=0.1)
     return pd.DataFrame(
         {
             "time": pd.date_range("2026-01-01", periods=rows, freq="15min"),
             "open": close,
             "high": close + 1,
-            "low": close - 1,
+            "low": low,
             "close": close,
         }
     )
