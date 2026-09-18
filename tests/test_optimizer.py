@@ -40,3 +40,13 @@ def test_optimizer_evaluates_valid_combinations_on_train_and_test() -> None:
     )
     assert len(results) == 3
     assert all(result.config.fast_ema_period < result.config.slow_ema_period for result in results)
+
+
+def test_parameter_grid_rejects_duplicate_values() -> None:
+    with pytest.raises(ValueError, match="duplicados"):
+        ParameterGrid(fast_ema_periods=(5, 5), slow_ema_periods=(20,))
+
+
+def test_optimizer_rejects_non_finite_train_ratio() -> None:
+    with pytest.raises(ValueError, match="finito"):
+        optimize(make_data(), ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,)), train_ratio=float("nan"))
