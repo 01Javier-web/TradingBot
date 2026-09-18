@@ -6,13 +6,20 @@ import pandas as pd
 
 from backtesting.models import BacktestResult, PositionSide, Trade
 from backtesting.metrics import max_drawdown, profit_factor, win_rate
+from data.quality import validate_time_series
 from strategy.signals import Signal, StrategyConfig, generate_signals
 
 
 class BacktestEngine:
     """Simula entradas en la vela siguiente a la señal para evitar look-ahead."""
 
-    def __init__(self, initial_balance: float = 10_000.0, quantity: float = 1.0, commission: float = 0.0, spread: float = 0.0) -> None:
+    def __init__(
+        self,
+        initial_balance: float = 10_000.0,
+        quantity: float = 1.0,
+        commission: float = 0.0,
+        spread: float = 0.0,
+    ) -> None:
         if initial_balance <= 0 or quantity <= 0 or commission < 0 or spread < 0:
             raise ValueError("Parámetros de backtest inválidos")
         self.initial_balance = float(initial_balance)
@@ -21,15 +28,18 @@ class BacktestEngine:
         self.spread = float(spread)
 
     def run(self, df: pd.DataFrame, config: StrategyConfig | None = None) -> BacktestResult:
-        """Ejecuta un backtest simple sobre OHLC ya ordenado temporalmente."""
-        if "time" not in df.columns:
-            raise ValueError("Falta la columna 'time'")
-        if df["time"].duplicated().any() or not df["time"].is_monotonic_increasing:
-            raise ValueError("Los datos deben estar ordenados y sin tiempos duplicados")
-        if len(df) < 2:
-            return BacktestResult(self.initial_balance, self.initial_balance, (), (self.initial_balance,))
+        """Ejecuta un backtest solo sobre datos de mercado estrictamente validados."""
+        data = validate_time_series(df)
 
-        data = generate_signals(df, config).reset_index(drop=True)
+        if len(data) < 2:
+            return BacktestResult(
+                self.initial_balance,
+                self.initial_balance,
+                (),
+                (self.initial_balance,),
+            )
+
+        data = generate_signals(data, config).reset_index(drop=True)
         balance = self.initial_balance
         equity = [balance]
         position: PositionSide | None = None
@@ -44,30 +54,64 @@ class BacktestEngine:
 
             if position is None and signal in (Signal.BUY, Signal.SELL):
                 position = PositionSide(signal.value)
-                entry_price = next_price + self.spread / 2 if position is PositionSide.BUY else next_price - self.spread / 2
+                entry_price = (
+                    next_price + self.spread / 2
+                    if position is PositionSide.BUY
+                    else next_price - self.spread / 2
+                )
                 entry_time = next_time
-            elif position is not None and ((position is PositionSide.BUY and signal is Signal.SELL) or (position is PositionSide.SELL and signal is Signal.BUY)):
-                exit_price = next_price - self.spread / 2 if position is PositionSide.BUY else next_price + self.spread / 2
+            elif position is not None and (
+                (position is PositionSide.BUY and signal is Signal.SELL)
+                or (position is PositionSide.SELL and signal is Signal.BUY)
+            ):
+                exit_price = (
+                    next_price - self.spread / 2
+                    if position is PositionSide.BUY
+                    else next_price + self.spread / 2
+                )
                 direction = 1 if position is PositionSide.BUY else -1
                 gross = (exit_price - entry_price) * direction * self.quantity
                 costs = self.commission
-                trade = Trade(entry_time, next_time, position, entry_price, exit_price, self.quantity, gross, costs)
+                trade = Trade(
+                    entry_time,
+                    next_time,
+                    position,
+                    entry_price,
+                    exit_price,
+                    self.quantity,
+                    gross,
+                    costs,
+                )
                 balance += trade.net_pnl
                 trades.append(trade)
                 position = None
                 equity.append(balance)
 
-        # Cierre forzoso al último close solo para cerrar la simulación; no genera señal futura.
+        # Cierre forzoso al último close solo para cerrar la simulación.
         if position is not None:
             exit_price = float(data.iloc[-1]["close"])
             direction = 1 if position is PositionSide.BUY else -1
             gross = (exit_price - entry_price) * direction * self.quantity
-            trade = Trade(entry_time, data.iloc[-1]["time"], position, entry_price, exit_price, self.quantity, gross, self.commission)
+            trade = Trade(
+                entry_time,
+                data.iloc[-1]["time"],
+                position,
+                entry_price,
+                exit_price,
+                self.quantity,
+                gross,
+                self.commission,
+            )
             balance += trade.net_pnl
             trades.append(trade)
             equity.append(balance)
 
-        return BacktestResult(self.initial_balance, balance, tuple(trades), tuple(equity))
+        return BacktestResult(
+            self.initial_balance,
+            balance,
+            tuple(trades),
+            tuple(equity),
+        )
 
 
 __all__ = ["BacktestEngine", "BacktestResult", "max_drawdown", "profit_factor", "win_rate"]
