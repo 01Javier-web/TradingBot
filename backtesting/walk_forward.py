@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from backtesting.engine import BacktestEngine
+from data.quality import validate_time_series
 from strategy.signals import StrategyConfig
 
 
@@ -33,15 +34,20 @@ def walk_forward(
         step = test_size
     if step <= 0:
         raise ValueError("step debe ser mayor que 0")
-    if "time" not in df.columns or not df["time"].is_monotonic_increasing:
-        raise ValueError("Los datos deben estar ordenados temporalmente")
+
+    data = validate_time_series(df)
+    if len(data) < train_size + test_size:
+        return ()
 
     windows: list[WalkForwardWindow] = []
     engine = BacktestEngine()
     start = 0
-    while start + train_size + test_size <= len(df):
-        train = df.iloc[start : start + train_size]
-        test = df.iloc[start + train_size : start + train_size + test_size]
+    while start + train_size + test_size <= len(data):
+        train = data.iloc[start : start + train_size]
+        test = data.iloc[start + train_size : start + train_size + test_size]
+
+        # El train delimita el periodo histórico disponible; el test es la única
+        # porción que produce el PnL fuera de muestra de esta ventana.
         result = engine.run(test, config)
         windows.append(
             WalkForwardWindow(
@@ -53,4 +59,5 @@ def walk_forward(
             )
         )
         start += step
+
     return tuple(windows)
