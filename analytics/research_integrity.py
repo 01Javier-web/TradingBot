@@ -29,6 +29,7 @@ def validate_record_integrity(document: dict[str, Any]) -> IntegrityCheck:
             fast_ema_periods=tuple(int(value) for value in manifest_data["fast_ema_periods"]),
             slow_ema_periods=tuple(int(value) for value in manifest_data["slow_ema_periods"]),
             rsi_periods=tuple(int(value) for value in manifest_data["rsi_periods"]),
+            schema_version=str(manifest_data.get("schema_version", "research-v1")),
         )
         expected_id = build_experiment_id(manifest)
         if document["experiment_id"] != expected_id:
