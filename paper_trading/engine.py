@@ -27,6 +27,7 @@ class TradingEvent:
     stop_loss: float | None = None
     pnl: float | None = None
     reason: str | None = None
+    market_time: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Convierte el evento a un diccionario serializable."""
@@ -63,15 +64,20 @@ class PaperTradingEngine:
 
     def process(self, row: pd.Series) -> str:
         """Procesa una vela; datos inválidos no generan acciones de mercado."""
+        try:
+            market_time = pd.to_datetime(row.get("time"), utc=True, errors="raise").isoformat()
+        except (TypeError, ValueError, KeyError):
+            market_time = None
+
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
-            self._record("KILL_SWITCH", reason=reason)
+            self._record("KILL_SWITCH", reason=reason, market_time=market_time)
             return f"STOPPED: Kill switch activo: {reason}"
 
         try:
             price = float(row["close"])
         except (KeyError, TypeError, ValueError):
-            self._record("REJECTED", reason="precio inválido")
+            self._record("REJECTED", reason="precio inválido", market_time=market_time)
             return "WAIT: precio inválido"
         if not isfinite(price) or price <= 0:
             self._record("REJECTED", reason="precio inválido")
@@ -93,6 +99,7 @@ class PaperTradingEngine:
                     side=position.side.value,
                     quantity=position.quantity,
                     pnl=pnl,
+                    market_time=market_time,
                 )
                 return f"STOP_LOSS {position.side.value}: pnl={pnl:.6f}"
 
@@ -101,7 +108,7 @@ class PaperTradingEngine:
             try:
                 signal = Signal(signal)
             except ValueError:
-                self._record("REJECTED", reason="señal inválida")
+                self._record("REJECTED", reason="señal inválida", market_time=market_time)
                 return "WAIT: señal inválida"
         if not isinstance(signal, Signal):
             self._record("REJECTED", reason="señal inválida")
@@ -112,7 +119,7 @@ class PaperTradingEngine:
             try:
                 raw_atr = float(row.get("atr", 0.0))
             except (TypeError, ValueError):
-                self._record("REJECTED", reason="ATR inválido")
+                self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
             if not isfinite(raw_atr):
                 self._record("REJECTED", reason="ATR inválido")
@@ -126,12 +133,12 @@ class PaperTradingEngine:
                 stop_loss_distance=stop_distance,
             )
             if not decision.approved:
-                self._record("REJECTED", reason=decision.reason)
+                self._record("REJECTED", reason=decision.reason, market_time=market_time)
                 return f"REJECTED: {decision.reason}"
             stop_loss = price - stop_distance if side is PositionSide.BUY else price + stop_distance
             if not isfinite(stop_loss) or stop_loss <= 0:
                 reason = "stop-loss calculado inválido"
-                self._record("REJECTED", reason=reason)
+                self._record("REJECTED", reason=reason, market_time=market_time)
                 return f"REJECTED: {reason}"
             self.portfolio.open_position(side, price, self.quantity, stop_loss)
             self._record(
@@ -140,6 +147,7 @@ class PaperTradingEngine:
                 price=price,
                 quantity=self.quantity,
                 stop_loss=stop_loss,
+                market_time=market_time,
             )
             return f"OPEN {side.value}"
 
@@ -154,6 +162,7 @@ class PaperTradingEngine:
                     price=price,
                     quantity=self.quantity,
                     pnl=pnl,
+                    market_time=market_time,
                 )
                 return f"CLOSE {current.value}: pnl={pnl:.6f}"
 
