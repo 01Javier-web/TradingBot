@@ -54,7 +54,7 @@ def default_stress_scenarios() -> tuple[StressScenario, ...]:
         StressScenario(
             "risk_limit",
             _rows(((100.0, Signal.BUY, 500.0),)),
-            ("REJECTED: riesgo por operación excede el máximo permitido",),
+            ("REJECTED: supera el riesgo máximo por operación",),
         ),
     )
 
