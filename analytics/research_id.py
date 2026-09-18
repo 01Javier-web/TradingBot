@@ -12,6 +12,7 @@ from analytics.research_manifest import ResearchManifest
 def build_experiment_id(manifest: ResearchManifest) -> str:
     """Genera un identificador estable a partir del contexto de investigación."""
     payload: dict[str, Any] = {
+        "schema_version": manifest.schema_version,
         "rows": manifest.rows,
         "train_ratio": manifest.train_ratio,
         "data_fingerprint": manifest.data_fingerprint,
