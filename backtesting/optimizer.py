@@ -31,6 +31,8 @@ class ParameterGrid:
                 raise ValueError(f"{name} debe ser tuple")
             if not values:
                 raise ValueError(f"{name} no puede estar vacío")
+            if len(set(values)) != len(values):
+                raise ValueError(f"{name} no puede contener valores duplicados")
             if any(not isinstance(value, int) or isinstance(value, bool) or value <= 0 for value in values):
                 raise ValueError(f"{name} debe contener enteros mayores que 0")
         if not any(fast < slow for fast in self.fast_ema_periods for slow in self.slow_ema_periods):
@@ -63,7 +65,9 @@ def optimize(df: pd.DataFrame, grid: ParameterGrid, train_ratio: float = 0.7) ->
     """
     if not isinstance(grid, ParameterGrid):
         raise ValueError("grid debe ser ParameterGrid")
-    train, test = chronological_split(df, train_ratio)
+    if isinstance(train_ratio, bool) or not isinstance(train_ratio, (int, float)) or not isfinite(float(train_ratio)):
+        raise ValueError("train_ratio debe ser numérico y finito")
+    train, test = chronological_split(df, float(train_ratio))
     results: list[OptimizationResult] = []
     seen: set[StrategyConfig] = set()
 
