@@ -23,6 +23,31 @@ class ResearchManifest:
     rsi_periods: tuple[int, ...]
     schema_version: str = "research-v1"
 
+    def __post_init__(self) -> None:
+        if isinstance(self.rows, bool) or not isinstance(self.rows, int) or self.rows < 2:
+            raise ValueError("rows debe ser un entero de al menos 2")
+        if (
+            isinstance(self.train_ratio, bool)
+            or not isinstance(self.train_ratio, (int, float))
+            or not isfinite(float(self.train_ratio))
+            or not 0 < self.train_ratio < 1
+        ):
+            raise ValueError("train_ratio debe ser numérico, finito y estar entre 0 y 1")
+        if not isinstance(self.data_fingerprint, str):
+            raise ValueError("data_fingerprint debe ser texto")
+        if self.data_fingerprint and (
+            len(self.data_fingerprint) != 64
+            or any(char not in "0123456789abcdef" for char in self.data_fingerprint.lower())
+        ):
+            raise ValueError("data_fingerprint debe ser SHA-256 hexadecimal")
+        if not isinstance(self.schema_version, str) or not self.schema_version.strip():
+            raise ValueError("schema_version debe ser texto no vacío")
+        ParameterGrid(
+            fast_ema_periods=self.fast_ema_periods,
+            slow_ema_periods=self.slow_ema_periods,
+            rsi_periods=self.rsi_periods,
+        )
+
     @classmethod
     def from_grid(
         cls,
