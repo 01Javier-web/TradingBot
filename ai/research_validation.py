@@ -24,6 +24,12 @@ def validate_results(results: list[OptimizationResult]) -> ResearchValidation:
     """Comprueba que los resultados tengan PnL finitos y configuraciones únicas."""
     issues: list[str] = []
 
+    if not isinstance(results, list):
+        return ResearchValidation(False, ("results debe ser una lista.",))
+
+    if any(not isinstance(result, OptimizationResult) for result in results):
+        return ResearchValidation(False, ("Todos los resultados deben ser OptimizationResult.",))
+
     if not results:
         issues.append("No hay resultados de optimización.")
 
