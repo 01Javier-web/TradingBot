@@ -21,18 +21,25 @@ def validate_record_integrity(document: dict[str, Any]) -> IntegrityCheck:
     """Verifica estructura mínima y que el ID corresponda al manifiesto."""
     issues: list[str] = []
     try:
+        if not isinstance(document, dict):
+            raise TypeError("el documento debe ser un objeto")
+        experiment_id = document.get("experiment_id")
+        if not isinstance(experiment_id, str):
+            raise ValueError("experiment_id debe ser texto")
         manifest_data = document["manifest"]
+        if not isinstance(manifest_data, dict):
+            raise TypeError("manifest debe ser un objeto")
         manifest = ResearchManifest(
-            rows=int(manifest_data["rows"]),
-            train_ratio=float(manifest_data["train_ratio"]),
-            data_fingerprint=str(manifest_data["data_fingerprint"]),
-            fast_ema_periods=tuple(int(value) for value in manifest_data["fast_ema_periods"]),
-            slow_ema_periods=tuple(int(value) for value in manifest_data["slow_ema_periods"]),
-            rsi_periods=tuple(int(value) for value in manifest_data["rsi_periods"]),
-            schema_version=str(manifest_data.get("schema_version", "research-v1")),
+            rows=manifest_data["rows"],
+            train_ratio=manifest_data["train_ratio"],
+            data_fingerprint=manifest_data["data_fingerprint"],
+            fast_ema_periods=tuple(manifest_data["fast_ema_periods"]),
+            slow_ema_periods=tuple(manifest_data["slow_ema_periods"]),
+            rsi_periods=tuple(manifest_data["rsi_periods"]),
+            schema_version=manifest_data.get("schema_version", "research-v1"),
         )
         expected_id = build_experiment_id(manifest)
-        if document["experiment_id"] != expected_id:
+        if experiment_id != expected_id:
             issues.append("experiment_id no corresponde al manifiesto.")
     except (KeyError, TypeError, ValueError) as exc:
         issues.append(f"Estructura de manifiesto inválida: {exc}.")
