@@ -66,14 +66,7 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
             "KILL_SWITCH": ("reason",),
         }
         if action in required_by_action:
-            required = required_by_action[action]
-            # Compatibilidad con eventos históricos: un OPEN/CLOSE que ya
-            # contiene sus datos numéricos principales puede omitir side.
-            if action in {"OPEN", "CLOSE", "STOP_LOSS"} and any(
-                event.get(field) is not None for field in required if field != "side"
-            ):
-                required = tuple(field for field in required if field != "side")
-            for field in required:
+            for field in required_by_action[action]:
                 if event.get(field) is None:
                     issues.append(f"{action} requiere {field}")
 
