@@ -63,3 +63,24 @@ def test_research_pipeline_has_stable_experiment_identity() -> None:
     assert first.experiment_id == second.experiment_id
     assert first.manifest.schema_version == "research-v1"
 
+
+
+def test_research_run_rejects_mismatched_experiment_identity() -> None:
+    import pytest
+    from ai.research_pipeline import ResearchRun
+
+    run = run_research(_data(), ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,), rsi_periods=(14,)))
+    with pytest.raises(ValueError, match="experiment_id"):
+        ResearchRun(run.results, run.finding, run.evidence, run.manifest, "0" * 64)
+
+
+def test_research_run_rejects_inconsistent_finding() -> None:
+    import pytest
+    from ai.research_pipeline import ResearchRun
+    from ai.researcher import ResearchFinding
+
+    run = run_research(_data(), ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,), rsi_periods=(14,)))
+    finding = ResearchFinding(99, run.finding.profitable_train, run.finding.profitable_test,
+                              run.finding.generalization_rate, run.finding.findings)
+    with pytest.raises(ValueError, match="finding.experiments"):
+        ResearchRun(run.results, finding, run.evidence, run.manifest, run.experiment_id)
