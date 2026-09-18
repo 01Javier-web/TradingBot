@@ -15,7 +15,7 @@ def save_research_finding(finding: ResearchFinding, path: str | Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(
-        json.dumps(asdict(finding), indent=2, ensure_ascii=False),
+        json.dumps(asdict(finding), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False),
         encoding="utf-8",
     )
 
