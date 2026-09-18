@@ -22,6 +22,10 @@ class ResearchQuality:
 
 def assess_quality(results: list[OptimizationResult]) -> ResearchQuality:
     """Resume cobertura y consistencia train/test de una investigación."""
+    if not isinstance(results, list):
+        raise ValueError("results debe ser una lista")
+    if any(not isinstance(item, OptimizationResult) for item in results):
+        raise ValueError("Todos los resultados deben ser OptimizationResult")
     finite = all(isfinite(item.train_pnl) and isfinite(item.test_pnl) for item in results)
     positive_train = sum(item.train_pnl > 0 for item in results)
     positive_test = sum(item.test_pnl > 0 for item in results)
