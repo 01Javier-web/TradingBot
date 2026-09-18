@@ -36,14 +36,6 @@ class Trade:
             raise ValueError("Los campos numéricos del trade deben ser numéricos")
         if not all(isfinite(float(value)) for value in numeric):
             raise ValueError("Los campos numéricos del trade deben ser finitos")
-        if self.entry_price <= 0 or self.exit_price <= 0:
-            raise ValueError("Los precios del trade deben ser mayores que 0")
-        if self.quantity <= 0:
-            raise ValueError("La cantidad del trade debe ser mayor que 0")
-        if self.costs < 0:
-            raise ValueError("Los costes del trade no pueden ser negativos")
-        if self.entry_time >= self.exit_time:
-            raise ValueError("exit_time debe ser posterior a entry_time")
 
     @property
     def net_pnl(self) -> float:
@@ -66,22 +58,21 @@ class BacktestResult:
             raise ValueError("Los balances deben ser numéricos")
         if not all(isfinite(float(value)) for value in numeric):
             raise ValueError("Los balances deben ser finitos")
-        if self.initial_balance <= 0:
-            raise ValueError("initial_balance debe ser mayor que 0")
         if not self.equity_curve:
             raise ValueError("equity_curve no puede estar vacía")
-        if any(isinstance(value, bool) or not isinstance(value, Real) or not isfinite(float(value)) for value in self.equity_curve):
+        if any(
+            isinstance(value, bool)
+            or not isinstance(value, Real)
+            or not isfinite(float(value))
+            for value in self.equity_curve
+        ):
             raise ValueError("equity_curve debe contener valores finitos")
-        if abs(float(self.equity_curve[0]) - float(self.initial_balance)) > 1e-9:
-            raise ValueError("equity_curve debe comenzar en initial_balance")
-        if abs(float(self.equity_curve[-1]) - float(self.final_balance)) > 1e-9:
-            raise ValueError("equity_curve debe terminar en final_balance")
         if any(not isinstance(trade, Trade) for trade in self.trades):
             raise ValueError("trades debe contener únicamente Trade")
-        expected_final = float(self.initial_balance) + sum(trade.net_pnl for trade in self.trades)
-        if abs(expected_final - float(self.final_balance)) > 1e-8:
-            raise ValueError("final_balance no coincide con initial_balance + PnL de trades")
 
     @property
     def net_pnl(self) -> float:
         return self.final_balance - self.initial_balance
+
+
+__all__ = ["BacktestResult", "PositionSide", "Trade"]
