@@ -40,7 +40,7 @@ def test_stream_processes_only_new_tail() -> None:
 
     assert result.rows_received == 25
     assert result.rows_processed == 5
-    assert result.last_time == extended["time"].iloc[-1]
+    assert result.last_time == pd.Timestamp(extended["time"].iloc[-1], tz="UTC")
 
 
 def test_stream_keeps_execution_disabled() -> None:
