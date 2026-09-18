@@ -33,3 +33,15 @@ def test_validation_rejects_empty_results() -> None:
 
     assert validation.valid is False
     assert validation.issues == ("No hay resultados de optimización.",)
+
+
+def test_validation_rejects_non_list_results() -> None:
+    validation = validate_results(())  # type: ignore[arg-type]
+    assert validation.valid is False
+    assert "lista" in validation.issues[0]
+
+
+def test_validation_rejects_wrong_result_type() -> None:
+    validation = validate_results([object()])  # type: ignore[list-item]
+    assert validation.valid is False
+    assert "OptimizationResult" in validation.issues[0]
