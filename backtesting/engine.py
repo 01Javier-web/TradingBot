@@ -106,8 +106,10 @@ class BacktestEngine:
                 unrealized = (next_close - entry_price) * direction * self.quantity
                 equity.append(balance + unrealized)
 
-        # Cierre forzoso al último close solo para cerrar la simulación.
+        # Cierre forzoso al último close solo si la entrada ocurrió antes.
         if position is not None:
+            if entry_time is None or entry_time >= data.iloc[-1]["time"]:
+                raise RuntimeError("La posición no puede cerrarse en el mismo instante de entrada")
             exit_price = float(data.iloc[-1]["close"])
             direction = 1 if position is PositionSide.BUY else -1
             gross = (exit_price - entry_price) * direction * self.quantity
