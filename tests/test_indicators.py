@@ -27,3 +27,52 @@ def test_atr_requires_ohlc_columns() -> None:
     df = pd.DataFrame({"close": [1.0, 1.1]})
     with pytest.raises(ValueError):
         atr(df, 2)
+
+
+def test_indicators_do_not_change_when_future_rows_are_appended() -> None:
+    base = pd.DataFrame(
+        {
+            "high": [102.0, 103.0, 104.0],
+            "low": [99.0, 100.0, 101.0],
+            "close": [101.0, 102.0, 103.0],
+        }
+    )
+    future = pd.DataFrame(
+        {
+            "high": [150.0, 200.0],
+            "low": [50.0, 25.0],
+            "close": [120.0, 180.0],
+        }
+    )
+
+    from strategy.signals import StrategyConfig, add_indicators
+
+    config = StrategyConfig(
+        fast_ema_period=2,
+        slow_ema_period=3,
+        rsi_period=2,
+        atr_period=2,
+    )
+    base_result = add_indicators(base, config)
+    extended_result = add_indicators(pd.concat([base, future], ignore_index=True), config)
+
+    pd.testing.assert_series_equal(
+        base_result["ema_fast"],
+        extended_result["ema_fast"].iloc[: len(base)].reset_index(drop=True),
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        base_result["ema_slow"],
+        extended_result["ema_slow"].iloc[: len(base)].reset_index(drop=True),
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        base_result["rsi"],
+        extended_result["rsi"].iloc[: len(base)].reset_index(drop=True),
+        check_names=False,
+    )
+    pd.testing.assert_series_equal(
+        base_result["atr"],
+        extended_result["atr"].iloc[: len(base)].reset_index(drop=True),
+        check_names=False,
+    )
