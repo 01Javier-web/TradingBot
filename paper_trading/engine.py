@@ -80,7 +80,7 @@ class PaperTradingEngine:
             self._record("REJECTED", reason="precio inválido", market_time=market_time)
             return "WAIT: precio inválido"
         if not isfinite(price) or price <= 0:
-            self._record("REJECTED", reason="precio inválido")
+            self._record("REJECTED", reason="precio inválido", market_time=market_time)
             return "WAIT: precio inválido"
 
         if self.portfolio.position is not None:
@@ -111,7 +111,7 @@ class PaperTradingEngine:
                 self._record("REJECTED", reason="señal inválida", market_time=market_time)
                 return "WAIT: señal inválida"
         if not isinstance(signal, Signal):
-            self._record("REJECTED", reason="señal inválida")
+            self._record("REJECTED", reason="señal inválida", market_time=market_time)
             return "WAIT: señal inválida"
 
         if self.portfolio.position is None and signal in (Signal.BUY, Signal.SELL):
@@ -122,7 +122,7 @@ class PaperTradingEngine:
                 self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
             if not isfinite(raw_atr):
-                self._record("REJECTED", reason="ATR inválido")
+                self._record("REJECTED", reason="ATR inválido", market_time=market_time)
                 return "WAIT: ATR inválido"
             stop_distance = abs(raw_atr)
             decision = self.risk_manager.approve(
