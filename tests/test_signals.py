@@ -47,3 +47,13 @@ def test_generate_signals_adds_indicators_and_signal() -> None:
 def test_invalid_strategy_config() -> None:
     with pytest.raises(ValueError):
         StrategyConfig(fast_ema_period=50, slow_ema_period=20)
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"rsi_buy_level": float("nan")},
+    {"rsi_sell_level": float("inf")},
+    {"min_atr": float("nan")},
+])
+def test_non_finite_strategy_config_is_rejected(kwargs: dict) -> None:
+    with pytest.raises(ValueError, match="numéricos y finitos"):
+        StrategyConfig(**kwargs)
