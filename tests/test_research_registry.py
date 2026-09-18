@@ -114,3 +114,13 @@ def test_load_research_record_rejects_tampered_manifest(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="experiment_id"):
         load_research_record(path)
+
+
+def test_load_research_record_rejects_missing_audit_sections(tmp_path: Path) -> None:
+    run = _run()
+    path = save_research_record(run, tmp_path / "research")
+    document = path.read_text(encoding="utf-8").replace('  "finding": {', '  "finding_removed": {', 1)
+    path.write_text(document, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="finding"):
+        load_research_record(path)
