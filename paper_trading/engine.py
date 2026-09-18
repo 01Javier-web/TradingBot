@@ -66,9 +66,12 @@ class PaperTradingEngine:
             market_time = None
         else:
             try:
-                market_time = pd.to_datetime(raw_time, utc=True, errors="raise").isoformat()
+                market_time = pd.to_datetime(
+                    raw_time, utc=True, errors="raise"
+                ).isoformat()
             except (TypeError, ValueError, KeyError):
-                market_time = None
+                self._record("REJECTED", reason="market_time inválido")
+                return "WAIT: market_time inválido"
 
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
