@@ -27,11 +27,13 @@ class PaperPortfolio:
         self.position: VirtualPosition | None = None
 
     def open_position(self, side: PositionSide, price: float, quantity: float, stop_loss: float | None = None) -> None:
+        if not isinstance(side, PositionSide):
+            raise ValueError("side debe ser PositionSide")
         if self.position is not None:
             raise ValueError("Ya existe una posición abierta")
-        if not isfinite(price) or not isfinite(quantity) or price <= 0 or quantity <= 0:
+        if isinstance(price, bool) or isinstance(quantity, bool) or not isfinite(price) or not isfinite(quantity) or price <= 0 or quantity <= 0:
             raise ValueError("price y quantity deben ser finitos y mayores que 0")
-        if stop_loss is not None and (not isfinite(stop_loss) or stop_loss <= 0):
+        if stop_loss is not None and (isinstance(stop_loss, bool) or not isfinite(stop_loss) or stop_loss <= 0):
             raise ValueError("stop_loss debe ser finito y mayor que 0")
         self.position = VirtualPosition(side, float(price), float(quantity), stop_loss)
 
