@@ -38,6 +38,12 @@ def test_trade_rejects_zero_duration() -> None:
         Trade(instant, instant, PositionSide.BUY, 10, 11, 1, 1, 0)
 
 
+def test_backtest_result_requires_coherent_trade_accounting() -> None:
+    trade = Trade(pd.Timestamp("2026-01-01", tz="UTC"), pd.Timestamp("2026-01-02", tz="UTC"), PositionSide.BUY, 100, 110, 1, 10, 1)
+    with pytest.raises(ValueError, match="final_balance"):
+        BacktestResult(100.0, 100.0, (trade,), (100.0, 100.0))
+
+
 def test_backtest_result_requires_coherent_equity_endpoints() -> None:
     with pytest.raises(ValueError, match="terminar"):
         BacktestResult(100.0, 110.0, (), (100.0, 105.0))
@@ -70,6 +76,7 @@ def test_manifest_normalizes_fingerprint_case() -> None:
         data_fingerprint="A" * 64,
     )
     assert manifest.data_fingerprint == "a" * 64
+    assert manifest.schema_version == "research-v1"
 
 
 def test_walk_forward_with_step_one_keeps_test_starts_strictly_advancing() -> None:
