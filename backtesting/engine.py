@@ -61,6 +61,12 @@ class BacktestEngine:
             next_time = data.loc[i + 1, "time"]
 
             if position is None and signal in (Signal.BUY, Signal.SELL):
+                # No se abre una operación en la última vela: no existe una
+                # vela posterior para representar una salida temporalmente posterior.
+                if i == len(data) - 2:
+                    if position is None:
+                        equity.append(balance)
+                    continue
                 position = PositionSide(signal.value)
                 entry_price = (
                     next_price + self.spread / 2
