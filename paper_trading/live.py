@@ -1,12 +1,9 @@
-"""Ciclo acotado de mercado en tiempo real para paper trading.
-
-El bucle solo consume datos de lectura y los entrega a una sesión virtual.
-No existe ninguna ruta hacia un adaptador de ejecución.
-"""
+"""Ciclo acotado de mercado en tiempo real para paper trading."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 from time import sleep
 from typing import Callable, Protocol
 
@@ -41,12 +38,14 @@ def run_bounded_paper_loop(
 ) -> LivePaperRun:
     """Lee un número finito de lotes y los procesa sin ejecución real."""
     assert_simulation_only(execution_authorized=False, component="run_bounded_paper_loop")
-    if not symbol.strip():
-        raise ValueError("symbol no puede estar vacío")
-    if timeframe <= 0 or polls <= 0 or count <= 0:
-        raise ValueError("timeframe, polls y count deben ser mayores que 0")
-    if interval_seconds < 0:
-        raise ValueError("interval_seconds no puede ser negativo")
+
+    if not isinstance(symbol, str) or not symbol.strip():
+        raise ValueError("symbol debe ser texto no vacío")
+    for name, value in (("timeframe", timeframe), ("polls", polls), ("count", count)):
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"{name} debe ser un entero mayor que 0")
+    if isinstance(interval_seconds, bool) or not isinstance(interval_seconds, (int, float)) or not isfinite(float(interval_seconds)) or interval_seconds < 0:
+        raise ValueError("interval_seconds debe ser finito y no negativo")
 
     last_result: PaperSessionResult | None = None
     total_rows = 0
@@ -64,6 +63,3 @@ def run_bounded_paper_loop(
 
     assert last_result is not None
     return LivePaperRun(polls=polls, rows=total_rows, session=last_result)
-
-
-__all__ = ["LivePaperRun", "MarketFeed", "run_bounded_paper_loop"]
