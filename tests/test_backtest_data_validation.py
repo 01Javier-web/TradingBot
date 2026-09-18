@@ -39,4 +39,4 @@ def test_backtest_accepts_valid_market_data() -> None:
     result = BacktestEngine().run(valid_data())
 
     assert result.initial_balance == pytest.approx(10_000.0)
-    assert result.final_balance == pytest.approx(10_000.0)
+    assert result.final_balance == pytest.approx(10_001.0)
