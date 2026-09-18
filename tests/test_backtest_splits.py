@@ -1,4 +1,4 @@
-"""Pruebas de separación temporal train/test."""
+"""Pruebas de partición temporal."""
 
 import pandas as pd
 import pytest
@@ -6,15 +6,55 @@ import pytest
 from backtesting.splits import chronological_split
 
 
-def test_chronological_split_preserves_time_order() -> None:
-    df = pd.DataFrame({"time": pd.date_range("2026-01-01", periods=10, freq="h"), "close": range(10)})
-    train, test = chronological_split(df, 0.7)
+def _data(rows: int = 10) -> pd.DataFrame:
+    close = pd.Series(range(100, 100 + rows), dtype=float)
+    return pd.DataFrame(
+        {
+            "time": pd.date_range("2026-01-01", periods=rows, freq="h"),
+            "open": close,
+            "high": close + 1,
+            "low": close - 1,
+            "close": close,
+        }
+    )
+
+
+def test_chronological_split_preserves_order_and_boundary() -> None:
+    train, test = chronological_split(_data(), 0.7)
+
     assert len(train) == 7
     assert len(test) == 3
-    assert train["time"].max() < test["time"].min()
+    assert train.iloc[-1]["time"] < test.iloc[0]["time"]
+    assert train.iloc[0]["time"] == _data().iloc[0]["time"]
+    assert test.iloc[-1]["time"] == _data().iloc[-1]["time"]
 
 
-def test_split_rejects_unsorted_data() -> None:
-    df = pd.DataFrame({"time": pd.to_datetime(["2026-01-02", "2026-01-01"]), "close": [2, 1]})
+@pytest.mark.parametrize("ratio", [0, 1, -0.1, 1.1])
+def test_chronological_split_rejects_invalid_ratio(ratio: float) -> None:
     with pytest.raises(ValueError):
+        chronological_split(_data(), ratio)
+
+
+def test_chronological_split_rejects_duplicate_timestamps() -> None:
+    df = _data()
+    df.loc[5, "time"] = df.loc[4, "time"]
+
+    with pytest.raises(ValueError, match="duplicados"):
         chronological_split(df)
+
+
+def test_chronological_split_rejects_invalid_prices() -> None:
+    df = _data()
+    df.loc[3, "close"] = float("nan")
+
+    with pytest.raises(ValueError, match="precios inválidos"):
+        chronological_split(df)
+
+
+def test_chronological_split_does_not_modify_input() -> None:
+    df = _data()
+    original = df.copy(deep=True)
+
+    chronological_split(df)
+
+    pd.testing.assert_frame_equal(df, original)
