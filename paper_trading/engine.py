@@ -64,10 +64,18 @@ class PaperTradingEngine:
 
     def process(self, row: pd.Series) -> str:
         """Procesa una vela; datos inválidos no generan acciones de mercado."""
+        raw_time = row.get("time")
         try:
-            market_time = pd.to_datetime(row.get("time"), utc=True, errors="raise").isoformat()
-        except (TypeError, ValueError, KeyError):
+            missing_time = raw_time is None or bool(pd.isna(raw_time))
+        except (TypeError, ValueError):
+            missing_time = False
+        if missing_time:
             market_time = None
+        else:
+            try:
+                market_time = pd.to_datetime(raw_time, utc=True, errors="raise").isoformat()
+            except (TypeError, ValueError, KeyError):
+                market_time = None
 
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
