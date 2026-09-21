@@ -20,9 +20,12 @@ def validate_time_series(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Faltan columnas: {', '.join(missing)}")
 
     result = df.copy()
-    result["time"] = pd.to_datetime(result["time"], errors="coerce", utc=True)
-    if result["time"].isna().any():
+    parsed_time = pd.to_datetime(result["time"], errors="coerce")
+    if parsed_time.isna().any():
         raise ValueError("Existen timestamps inválidos")
+    if getattr(parsed_time.dt, "tz", None) is None:
+        raise ValueError("Los timestamps deben tener zona horaria")
+    result["time"] = parsed_time.dt.tz_convert("UTC")
     if result["time"].duplicated().any():
         raise ValueError("Existen timestamps duplicados")
     if not result["time"].is_monotonic_increasing:
