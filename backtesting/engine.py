@@ -6,7 +6,7 @@ from math import isfinite
 
 import pandas as pd
 
-from backtesting.models import BacktestResult, PositionSide, Trade
+from backtesting.models import BacktestResult, PositionSide, Trade, calculate_gross_pnl
 from backtesting.metrics import max_drawdown, profit_factor, win_rate
 from data.quality import validate_time_series
 from strategy.signals import Signal, StrategyConfig, generate_signals
@@ -87,8 +87,7 @@ class BacktestEngine:
                     if position is PositionSide.BUY
                     else next_price + self.spread / 2
                 )
-                direction = 1 if position is PositionSide.BUY else -1
-                gross = (exit_price - entry_price) * direction * self.quantity
+                gross = calculate_gross_pnl(position, entry_price, exit_price, self.quantity)
                 trade = Trade(
                     entry_time,
                     next_time,
@@ -115,8 +114,7 @@ class BacktestEngine:
             if entry_time is None or entry_time >= data.iloc[-1]["time"]:
                 raise RuntimeError("La posición no puede cerrarse en el mismo instante de entrada")
             exit_price = float(data.iloc[-1]["close"])
-            direction = 1 if position is PositionSide.BUY else -1
-            gross = (exit_price - entry_price) * direction * self.quantity
+            gross = calculate_gross_pnl(position, entry_price, exit_price, self.quantity)
             trade = Trade(
                 entry_time,
                 data.iloc[-1]["time"],
