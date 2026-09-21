@@ -100,14 +100,14 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
         side = event.get("side")
         if action == "OPEN":
             if open_side is not None:
-                issues.append(f"evento {count}: OPEN con posición ya abierta")
+                issues.append("OPEN con posición ya abierta")
             elif side in _ALLOWED_SIDES:
                 open_side = side
         elif action in {"CLOSE", "STOP_LOSS"}:
             if open_side is None:
-                issues.append(f"evento {count}: {action} sin posición abierta")
+                issues.append(f"{action} sin posición abierta")
             elif side in _ALLOWED_SIDES and side != open_side:
-                issues.append(f"evento {count}: {action} side no coincide con OPEN")
+                issues.append(f"{action} side no coincide con OPEN")
             elif open_side is not None and side in _ALLOWED_SIDES:
                 open_side = None
 
