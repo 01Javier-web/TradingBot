@@ -9,9 +9,9 @@ from numbers import Real
 def _finite_values(values: list[float] | tuple[float, ...]) -> tuple[float, ...]:
     if not isinstance(values, (list, tuple)):
         raise TypeError("La serie debe ser list o tuple")
-    normalized = tuple(float(value) for value in values)
     if any(isinstance(value, bool) or not isinstance(value, Real) for value in values):
         raise ValueError("Las métricas requieren valores numéricos")
+    normalized = tuple(float(value) for value in values)
     if not all(isfinite(value) for value in normalized):
         raise ValueError("Las métricas requieren valores finitos")
     return normalized
