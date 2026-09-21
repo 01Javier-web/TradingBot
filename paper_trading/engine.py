@@ -139,7 +139,8 @@ class PaperTradingEngine:
                 self._record("REJECTED", reason=decision.reason, market_time=market_time)
                 return f"REJECTED: {decision.reason}"
 
-            stop_loss = price - stop_distance if side is PositionSide.BUY else price + stop_distance
+            entry_execution_price = self.portfolio.execution_entry_price(side, price)
+            stop_loss = entry_execution_price - stop_distance if side is PositionSide.BUY else entry_execution_price + stop_distance
             if not isfinite(stop_loss) or stop_loss <= 0:
                 reason = "stop-loss calculado inválido"
                 self._record("REJECTED", reason=reason, market_time=market_time)
