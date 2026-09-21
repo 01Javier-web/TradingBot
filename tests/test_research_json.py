@@ -25,6 +25,7 @@ def test_research_run_to_dict_contains_audit_sections() -> None:
         "validation",
         "quality",
         "decision",
+        "validation_gate",
         "candidates",
     }
     assert len(document["experiment_id"]) == 64
