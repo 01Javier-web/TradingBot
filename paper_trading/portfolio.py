@@ -41,7 +41,10 @@ class PaperPortfolio:
             float(price) + self.spread / 2
             if side is PositionSide.BUY
             else float(price) - self.spread / 2
-        )\n        if execution_price <= 0:\n            raise ValueError("el precio de ejecución resultante debe ser mayor que 0")\n        return execution_price
+        )
+        if execution_price <= 0:
+            raise ValueError("el precio de ejecución resultante debe ser mayor que 0")
+        return execution_price
 
     def open_position(self, side: PositionSide, price: float, quantity: float, stop_loss: float | None = None) -> None:
         if not isinstance(side, PositionSide):
