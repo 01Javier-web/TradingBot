@@ -37,7 +37,11 @@ class PaperPortfolio:
             raise ValueError("side debe ser PositionSide")
         if isinstance(price, bool) or not isinstance(price, Real) or not isfinite(float(price)) or price <= 0:
             raise ValueError("price debe ser numérico, finito y mayor que 0")
-        execution_price = (\n            float(price) + self.spread / 2\n            if side is PositionSide.BUY\n            else float(price) - self.spread / 2\n        )\n        if execution_price <= 0:\n            raise ValueError("el precio de ejecución resultante debe ser mayor que 0")\n        return execution_price
+        execution_price = (
+            float(price) + self.spread / 2
+            if side is PositionSide.BUY
+            else float(price) - self.spread / 2
+        )\n        if execution_price <= 0:\n            raise ValueError("el precio de ejecución resultante debe ser mayor que 0")\n        return execution_price
 
     def open_position(self, side: PositionSide, price: float, quantity: float, stop_loss: float | None = None) -> None:
         if not isinstance(side, PositionSide):
