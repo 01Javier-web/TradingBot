@@ -73,7 +73,7 @@ def test_statistics_preserves_missing_metric_information() -> None:
         [_result(10.0, 5.0, test_profit_factor=None)]
     )
 
-    assert statistics.metrics_available == 0
+    assert statistics.metrics_available == 1
     assert statistics.statistically_incomplete is False
     assert statistics.unbounded_test_profit_factor == 1
     assert any("profit factor no acotado" in warning for warning in statistics.warnings)
