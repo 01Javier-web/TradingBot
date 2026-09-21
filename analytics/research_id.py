@@ -6,19 +6,19 @@ from hashlib import sha256
 import json
 from typing import Any
 
-from analytics.research_manifest import ResearchManifest
+from analytics.research_manifest import ResearchManifest, manifest_to_dict
 
 
 def build_experiment_id(manifest: ResearchManifest) -> str:
-    """Genera un identificador estable a partir del contexto de investigación."""
-    payload: dict[str, Any] = {
-        "schema_version": manifest.schema_version,
-        "rows": manifest.rows,
-        "train_ratio": manifest.train_ratio,
-        "data_fingerprint": manifest.data_fingerprint,
-        "fast_ema_periods": manifest.fast_ema_periods,
-        "slow_ema_periods": manifest.slow_ema_periods,
-        "rsi_periods": manifest.rsi_periods,
-    }
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    """Genera un ID estable a partir de todo el manifiesto."""
+    if not isinstance(manifest, ResearchManifest):
+        raise ValueError("manifest debe ser ResearchManifest")
+    payload: dict[str, Any] = manifest_to_dict(manifest)
+    canonical = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
     return sha256(canonical.encode("utf-8")).hexdigest()
