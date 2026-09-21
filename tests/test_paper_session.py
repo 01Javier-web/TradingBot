@@ -40,3 +40,25 @@ def test_open_position_remains_unrealized_in_session_report() -> None:
     assert report.closed_trades == 0
     assert report.open_position is True
     assert report.consistent is True
+
+
+def test_kill_switch_blocks_new_paper_position_and_is_auditable() -> None:
+    from risk.kill_switch import KillSwitch
+
+    switch = KillSwitch()
+    switch.trigger("prueba de emergencia")
+    portfolio = PaperPortfolio(10_000)
+    engine = PaperTradingEngine(portfolio, kill_switch=switch)
+
+    result = engine.process(pd.Series({
+        "time": "2026-01-01T00:00:00Z",
+        "close": 100.0,
+        "atr": 5.0,
+        "signal": Signal.BUY,
+    }))
+
+    assert result.startswith("STOPPED:")
+    assert portfolio.position is None
+    assert portfolio.balance == pytest.approx(10_000)
+    assert engine.history[-1]["action"] == "KILL_SWITCH"
+    assert engine.history[-1]["reason"] == "prueba de emergencia"
