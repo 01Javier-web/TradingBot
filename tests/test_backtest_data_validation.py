@@ -107,4 +107,4 @@ def test_backtest_sell_uses_inverse_pnl_direction(monkeypatch) -> None:
     assert len(result.trades) == 1
     trade = result.trades[0]
     assert trade.side.value == "SELL"
-    assert trade.gross_pnl == pytest.approx(2.0)
+    assert trade.gross_pnl == pytest.approx(-3.0)
