@@ -74,8 +74,9 @@ def test_statistics_preserves_missing_metric_information() -> None:
     )
 
     assert statistics.metrics_available == 0
-    assert statistics.statistically_incomplete is True
-    assert "Faltan métricas" in statistics.warnings[0]
+    assert statistics.statistically_incomplete is False
+    assert statistics.unbounded_test_profit_factor == 1
+    assert any("profit factor no acotado" in warning for warning in statistics.warnings)
 
 
 def test_statistics_rejects_invalid_configuration() -> None:
