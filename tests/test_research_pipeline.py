@@ -10,7 +10,7 @@ def _data(rows: int = 80) -> pd.DataFrame:
     close = pd.Series(range(1, rows + 1), dtype=float)
     return pd.DataFrame(
         {
-            "time": pd.date_range("2026-01-01", periods=rows, freq="15min"),
+            "time": pd.date_range("2026-01-01", periods=rows, freq="15min", tz="UTC"),
             "open": close,
             "high": close + 1,
             "low": (close - 1).clip(lower=0.1),
@@ -62,6 +62,24 @@ def test_research_pipeline_has_stable_experiment_identity() -> None:
 
     assert first.experiment_id == second.experiment_id
     assert first.manifest.schema_version == "research-v1"
+
+
+def test_research_identity_changes_when_manifest_schema_changes() -> None:
+    from analytics.research_id import build_experiment_id
+    from analytics.research_manifest import ResearchManifest
+
+    grid = ParameterGrid(fast_ema_periods=(5,), slow_ema_periods=(20,), rsi_periods=(14,))
+    run = run_research(_data(), grid)
+    changed = ResearchManifest(
+        rows=run.manifest.rows,
+        train_ratio=run.manifest.train_ratio,
+        data_fingerprint=run.manifest.data_fingerprint,
+        fast_ema_periods=run.manifest.fast_ema_periods,
+        slow_ema_periods=run.manifest.slow_ema_periods,
+        rsi_periods=run.manifest.rsi_periods,
+        schema_version="research-v2",
+    )
+    assert build_experiment_id(changed) != run.experiment_id
 
 
 
