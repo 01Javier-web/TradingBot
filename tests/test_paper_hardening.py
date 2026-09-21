@@ -155,3 +155,32 @@ def test_paper_engine_rejects_retrograde_market_time() -> None:
 def test_portfolio_rejects_directionally_invalid_stop_loss(side, stop_loss) -> None:
     with pytest.raises(ValueError, match="stop_loss"):
         PaperPortfolio().open_position(side, 100.0, 1.0, stop_loss)
+
+
+@pytest.mark.parametrize(
+    "events,expected",
+    [
+        (
+            [{"sequence": 1, "action": "CLOSE", "side": "BUY", "price": 101.0, "quantity": 1.0, "pnl": 1.0}],
+            "CLOSE sin posición abierta",
+        ),
+        (
+            [
+                {"sequence": 1, "action": "OPEN", "side": "BUY", "price": 100.0, "quantity": 1.0, "stop_loss": 98.0},
+                {"sequence": 2, "action": "OPEN", "side": "BUY", "price": 101.0, "quantity": 1.0, "stop_loss": 99.0},
+            ],
+            "OPEN con posición ya abierta",
+        ),
+        (
+            [
+                {"sequence": 1, "action": "OPEN", "side": "BUY", "price": 100.0, "quantity": 1.0, "stop_loss": 98.0},
+                {"sequence": 2, "action": "CLOSE", "side": "SELL", "price": 101.0, "quantity": 1.0, "pnl": 1.0},
+            ],
+            "CLOSE side no coincide",
+        ),
+    ],
+)
+def test_audit_rejects_invalid_position_lifecycle(events, expected) -> None:
+    result = audit_paper_events(events)
+    assert result.valid is False
+    assert expected in result.issues
