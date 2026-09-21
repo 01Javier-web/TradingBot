@@ -9,7 +9,7 @@ from analytics.research_fingerprint import fingerprint_dataframe
 def _data() -> pd.DataFrame:
     return pd.DataFrame(
         {
-            "time": pd.date_range("2026-01-01", periods=3, freq="15min"),
+            "time": pd.date_range("2026-01-01", periods=3, freq="15min", tz="UTC"),
             "open": [1.0, 2.0, 3.0],
             "high": [2.0, 3.0, 4.0],
             "low": [0.5, 1.5, 2.5],
@@ -20,6 +20,14 @@ def _data() -> pd.DataFrame:
 
 def test_same_data_produces_same_fingerprint() -> None:
     assert fingerprint_dataframe(_data()) == fingerprint_dataframe(_data())
+
+
+def test_equivalent_utc_timezones_produce_same_fingerprint() -> None:
+    utc = _data()
+    shifted = _data()
+    shifted["time"] = shifted["time"].dt.tz_convert("America/Bogota")
+
+    assert fingerprint_dataframe(utc) == fingerprint_dataframe(shifted)
 
 
 def test_data_change_produces_different_fingerprint() -> None:
@@ -41,6 +49,14 @@ def test_missing_required_column_is_rejected() -> None:
     data = _data().drop(columns="close")
 
     with pytest.raises(ValueError, match="close"):
+        fingerprint_dataframe(data)
+
+
+def test_naive_timestamps_are_rejected() -> None:
+    data = _data()
+    data["time"] = data["time"].dt.tz_localize(None)
+
+    with pytest.raises(ValueError, match="zona horaria"):
         fingerprint_dataframe(data)
 
 
