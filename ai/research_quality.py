@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from analytics.research_statistics import ResearchStatistics, assess_statistics
 from backtesting.optimizer import OptimizationResult
 
 
@@ -18,6 +19,7 @@ class ResearchQuality:
     positive_test: int
     positive_both: int
     generalization_rate: float
+    statistics: ResearchStatistics
 
 
 def assess_quality(results: list[OptimizationResult]) -> ResearchQuality:
@@ -38,4 +40,5 @@ def assess_quality(results: list[OptimizationResult]) -> ResearchQuality:
         positive_test=positive_test,
         positive_both=positive_both,
         generalization_rate=rate,
+        statistics=assess_statistics(results),
     )
