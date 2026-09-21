@@ -20,6 +20,14 @@ def test_candidate_summary_contains_config_and_pnl() -> None:
             "rsi_period": 14,
             "train_pnl": 10.0,
             "test_pnl": 4.0,
+            "train_trades": None,
+            "test_trades": None,
+            "train_drawdown": None,
+            "test_drawdown": None,
+            "train_win_rate": None,
+            "test_win_rate": None,
+            "train_profit_factor": None,
+            "test_profit_factor": None,
             "consistent": True,
         }
     ]
