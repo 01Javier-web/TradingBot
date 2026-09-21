@@ -40,6 +40,9 @@ def test_optimizer_evaluates_valid_combinations_on_train_and_test() -> None:
     )
     assert len(results) == 3
     assert all(result.config.fast_ema_period < result.config.slow_ema_period for result in results)
+    assert all(result.train_trades is not None and result.test_trades is not None for result in results)
+    assert all(result.train_drawdown is not None and result.test_drawdown is not None for result in results)
+    assert all(result.train_win_rate is not None and result.test_win_rate is not None for result in results)
 
 
 def test_parameter_grid_rejects_duplicate_values() -> None:
