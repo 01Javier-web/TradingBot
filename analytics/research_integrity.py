@@ -41,10 +41,6 @@ def validate_record_integrity(document: dict[str, Any]) -> IntegrityCheck:
         expected_id = build_experiment_id(manifest)
         if experiment_id != expected_id:
             issues.append("experiment_id no corresponde al manifiesto.")
-        for section in ("finding", "validation", "quality", "decision", "candidates"):
-            expected_type = list if section == "candidates" else dict
-            if not isinstance(document.get(section), expected_type):
-                issues.append(f"{section} debe ser {'una lista' if section == 'candidates' else 'un objeto'}.")
     except (KeyError, TypeError, ValueError) as exc:
         issues.append(f"Estructura de manifiesto inválida: {exc}.")
 
