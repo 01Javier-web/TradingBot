@@ -58,6 +58,7 @@ class ResearchStatistics:
     median_test_drawdown: float
     median_test_win_rate: float
     median_test_profit_factor: float | None
+    unbounded_test_profit_factor: int
     parameter_variants: int
     warnings: tuple[str, ...]
 
@@ -86,7 +87,6 @@ def assess_statistics(
         if item.test_trades is not None
         and item.test_drawdown is not None
         and item.test_win_rate is not None
-        and item.test_profit_factor is not None
     ]
 
     insufficient = sum(
@@ -117,6 +117,12 @@ def assess_statistics(
         for item in fully_measured
         if item.test_profit_factor is not None
     ]
+    unbounded_profit_factor = sum(
+        item.test_profit_factor is None
+        and item.test_trades is not None
+        and item.test_trades > 0
+        for item in fully_measured
+    )
 
     warnings: list[str] = []
     if total == 0:
@@ -143,6 +149,11 @@ def assess_statistics(
             f"{weak_generalization} resultado(s) positivos presentan una relación "
             "test/train inferior al umbral configurado."
         )
+    if unbounded_profit_factor:
+        warnings.append(
+            f"{unbounded_profit_factor} resultado(s) tienen profit factor no acotado "
+            "porque no registran pérdidas en test."
+        )
 
     return ResearchStatistics(
         results=total,
@@ -155,6 +166,7 @@ def assess_statistics(
         median_test_drawdown=float(median(drawdowns)) if drawdowns else 0.0,
         median_test_win_rate=float(median(win_rates)) if win_rates else 0.0,
         median_test_profit_factor=float(median(profit_factors)) if profit_factors else None,
+        unbounded_test_profit_factor=unbounded_profit_factor,
         parameter_variants=len({item.config for item in results}),
         warnings=tuple(warnings),
     )
