@@ -13,6 +13,7 @@ def test_format_catalog_has_stable_context_fields() -> None:
         fast_ema_periods=(5, 10),
         slow_ema_periods=(20, 30),
         rsi_periods=(14,),
+        schema_version="research-v1",
     )
 
     output = format_catalog((record,))
