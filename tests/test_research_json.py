@@ -61,3 +61,14 @@ def test_research_json_is_deterministic(tmp_path: Path) -> None:
     first = path.read_text(encoding="utf-8")
     save_research_run(run, path)
     assert path.read_text(encoding="utf-8") == first
+
+
+def test_save_research_run_rejects_different_existing_content(tmp_path: Path) -> None:
+    run = _run()
+    path = tmp_path / "run.json"
+    save_research_run(run, path)
+    path.write_text(path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    import pytest
+    with pytest.raises(FileExistsError):
+        save_research_run(run, path)
+    save_research_run(run, path, overwrite=True)
