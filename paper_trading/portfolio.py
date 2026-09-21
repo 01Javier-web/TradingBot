@@ -31,6 +31,15 @@ class PaperPortfolio:
         self.balance = self.initial_balance
         self.position: VirtualPosition | None = None
 
+    def execution_entry_price(self, side: PositionSide, price: float) -> float:
+        """Convierte precio de mercado a precio efectivo de entrada con spread."""
+        if not isinstance(side, PositionSide):
+            raise ValueError("side debe ser PositionSide")
+        if isinstance(price, bool) or not isinstance(price, Real) or not isfinite(float(price)) or price <= 0:
+            raise ValueError("price debe ser numérico, finito y mayor que 0")
+        execution_price = self.execution_entry_price(side, float(price))
+        return execution_price
+
     def open_position(self, side: PositionSide, price: float, quantity: float, stop_loss: float | None = None) -> None:
         if not isinstance(side, PositionSide):
             raise ValueError("side debe ser PositionSide")
