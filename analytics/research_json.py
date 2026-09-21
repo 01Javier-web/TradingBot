@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ai.research_decision import build_research_decision
+from ai.research_gate import select_for_validation, validate_selected_candidate
 from ai.research_pipeline import ResearchRun
 from ai.research_quality import assess_quality
 from analytics.research_decision_report import decision_to_dict
@@ -17,7 +18,9 @@ from analytics.research_report import candidate_summary
 def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
     """Convierte una corrida en un documento JSON estable y auditable."""
     quality = assess_quality(list(run.results))
-    decision = decision_to_dict(build_research_decision(run))
+    selection = select_for_validation(run)
+    final_validation = validate_selected_candidate(run, selection)
+    decision = decision_to_dict(build_research_decision(run, final_validation=final_validation))
     return {
         "experiment_id": run.experiment_id,
         "manifest": manifest_to_dict(run.manifest),
@@ -57,6 +60,35 @@ def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
             },
         },
         "decision": decision,
+        "validation_gate": {
+            "selection": {
+                "experiment_id": selection.experiment_id,
+                "config": {
+                    "fast_ema_period": selection.config.fast_ema_period,
+                    "slow_ema_period": selection.config.slow_ema_period,
+                    "rsi_period": selection.config.rsi_period,
+                },
+                "train_pnl": selection.train_pnl,
+                "train_drawdown": selection.train_drawdown,
+                "train_trades": selection.train_trades,
+                "candidates": selection.candidates,
+            },
+            "final_validation": {
+                "experiment_id": final_validation.experiment_id,
+                "valid": final_validation.valid,
+                "config": {
+                    "fast_ema_period": final_validation.config.fast_ema_period,
+                    "slow_ema_period": final_validation.config.slow_ema_period,
+                    "rsi_period": final_validation.config.rsi_period,
+                },
+                "test_pnl": final_validation.test_pnl,
+                "test_trades": final_validation.test_trades,
+                "test_drawdown": final_validation.test_drawdown,
+                "test_win_rate": final_validation.test_win_rate,
+                "test_profit_factor": final_validation.test_profit_factor,
+                "issues": list(final_validation.issues),
+            },
+        },
         "candidates": candidate_summary(run.evidence.candidates),
     }
 
