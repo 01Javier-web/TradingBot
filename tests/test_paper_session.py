@@ -62,3 +62,22 @@ def test_kill_switch_blocks_new_paper_position_and_is_auditable() -> None:
     assert portfolio.balance == pytest.approx(10_000)
     assert engine.history[-1]["action"] == "KILL_SWITCH"
     assert engine.history[-1]["reason"] == "prueba de emergencia"
+
+
+@pytest.mark.parametrize(
+    "side,entry,exit,expected",
+    [
+        (Signal.BUY, 100.0, 110.0, 8.0),
+        (Signal.SELL, 100.0, 90.0, 8.0),
+    ],
+)
+def test_paper_pnl_matches_spread_and_commission_convention(side, entry, exit, expected) -> None:
+    portfolio = PaperPortfolio(10_000, commission=1.0, spread=2.0)
+    engine = PaperTradingEngine(portfolio, quantity=1.0)
+    assert engine.process(pd.Series({"close": entry, "atr": 5.0, "signal": side})) == f"OPEN {side.value}"
+    opposite = Signal.SELL if side is Signal.BUY else Signal.BUY
+    assert engine.process(pd.Series({"close": exit, "signal": opposite})).startswith("CLOSE")
+    report = engine.performance_report()
+    assert report.realized_pnl == pytest.approx(expected)
+    assert report.final_balance == pytest.approx(10_000 + expected)
+    assert report.consistent is True
