@@ -22,6 +22,8 @@ def test_quality_counts_train_test_and_generalization() -> None:
     assert quality.positive_test == 1
     assert quality.positive_both == 1
     assert quality.generalization_rate == 1 / 3
+    assert quality.statistics.results == 3
+    assert quality.statistics.statistically_incomplete is True
 
 
 def test_quality_empty_results_are_explicit() -> None:
