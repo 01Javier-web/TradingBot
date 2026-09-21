@@ -1,4 +1,4 @@
-MetaTrader5==5.0.6180
+-r requirements-mt5.txt
 pandas
 numpy
 python-dotenv
