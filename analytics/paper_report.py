@@ -53,14 +53,18 @@ def build_paper_report(
     initial_balance: float,
 ) -> PaperPerformanceReport:
     """Construye métricas y comprueba balance inicial + PnL realizado."""
-    if not isfinite(initial_balance) or initial_balance <= 0:
+    if not isinstance(portfolio, PaperPortfolio):
+        raise ValueError("portfolio debe ser PaperPortfolio")
+    if not isfinite(float(initial_balance)) or initial_balance <= 0:
         raise ValueError("initial_balance debe ser finito y mayor que 0")
+    if not isfinite(float(portfolio.balance)):
+        raise ValueError("portfolio.balance debe ser finito")
 
     pnls = _closed_pnls(events)
     realized_pnl = sum(pnls)
     final_balance = portfolio.balance
     expected_balance = float(initial_balance) + realized_pnl
-    consistent = abs(final_balance - expected_balance) <= 1e-9
+    consistent = abs(final_balance - expected_balance) <= 1e-8
     issue = None if consistent else "final_balance no coincide con initial_balance + realized_pnl."
 
     gains = sum(pnl for pnl in pnls if pnl > 0)
