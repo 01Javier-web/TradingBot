@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from ai.research_pipeline import ResearchRun
 from backtesting.walk_forward_validation import WalkForwardValidation
+from ai.research_gate import FinalValidation
 
 
 @dataclass(frozen=True)
@@ -19,12 +20,15 @@ class ResearchDecision:
 def build_research_decision(
     run: ResearchRun,
     walk_forward_validation: WalkForwardValidation | None = None,
+    final_validation: FinalValidation | None = None,
 ) -> ResearchDecision:
     """Marca condiciones que requieren revisión sin recomendar operaciones."""
     if not isinstance(run, ResearchRun):
         raise ValueError("run debe ser ResearchRun")
     if walk_forward_validation is not None and not isinstance(walk_forward_validation, WalkForwardValidation):
         raise ValueError("walk_forward_validation debe ser WalkForwardValidation o None")
+    if final_validation is not None and not isinstance(final_validation, FinalValidation):
+        raise ValueError("final_validation debe ser FinalValidation o None")
 
     reasons: list[str] = []
 
@@ -36,5 +40,7 @@ def build_research_decision(
         reasons.append("No hay candidatos consistentes train/test para revisar.")
     if walk_forward_validation is not None and not walk_forward_validation.valid:
         reasons.append("La validación walk-forward contiene problemas.")
+    if final_validation is not None and not final_validation.valid:
+        reasons.append("La validación final del candidato contiene problemas.")
 
     return ResearchDecision(review_required=bool(reasons), reasons=tuple(reasons))
