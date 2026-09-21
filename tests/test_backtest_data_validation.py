@@ -79,3 +79,32 @@ def test_backtest_applies_spread_and_commission_without_lookahead(monkeypatch) -
     assert trade.exit_price == pytest.approx(102.0)
     assert trade.gross_pnl == pytest.approx(0.0)
     assert trade.net_pnl == pytest.approx(-1.0)
+
+
+def test_backtest_sell_uses_inverse_pnl_direction(monkeypatch) -> None:
+    from strategy.signals import Signal
+
+    data = valid_data().copy()
+    data = pd.concat(
+        [
+            data,
+            pd.DataFrame({
+                "time": [pd.Timestamp("2026-01-01 00:45:00", tz="UTC")],
+                "open": [104.0], "high": [105.0], "low": [103.0], "close": [103.0],
+            }),
+        ],
+        ignore_index=True,
+    )
+    signals = [Signal.SELL, Signal.WAIT, Signal.BUY, Signal.WAIT]
+
+    def fake_signals(frame, config=None):
+        result = frame.copy()
+        result["signal"] = signals
+        return result
+
+    monkeypatch.setattr("backtesting.engine.generate_signals", fake_signals)
+    result = BacktestEngine().run(data)
+    assert len(result.trades) == 1
+    trade = result.trades[0]
+    assert trade.side.value == "SELL"
+    assert trade.gross_pnl == pytest.approx(2.0)
