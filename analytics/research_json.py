@@ -45,11 +45,24 @@ def research_run_to_dict(run: ResearchRun) -> dict[str, Any]:
     }
 
 
-def save_research_run(run: ResearchRun, path: str | Path) -> None:
-    """Guarda la corrida completa sin modificar los resultados originales."""
+def save_research_run(run: ResearchRun, path: str | Path, *, overwrite: bool = False) -> None:
+    """Guarda una corrida de forma idempotente y evita reemplazos accidentales."""
+    if not isinstance(run, ResearchRun):
+        raise ValueError("run debe ser ResearchRun")
     destination = Path(path)
+    if destination.exists() and destination.is_dir():
+        raise ValueError("path debe apuntar a un archivo")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(
-        json.dumps(research_run_to_dict(run), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False),
-        encoding="utf-8",
+    content = json.dumps(
+        research_run_to_dict(run),
+        indent=2,
+        ensure_ascii=False,
+        sort_keys=True,
+        allow_nan=False,
     )
+    if destination.exists() and not overwrite:
+        existing = destination.read_text(encoding="utf-8")
+        if existing != content:
+            raise FileExistsError("El archivo ya contiene una corrida diferente.")
+        return
+    destination.write_text(content, encoding="utf-8")
