@@ -40,6 +40,10 @@ class PaperPortfolio:
             if isinstance(stop_loss, bool) or not isinstance(stop_loss, Real) or not isfinite(float(stop_loss)) or stop_loss <= 0:
                 raise ValueError("stop_loss debe ser numérico, finito y mayor que 0")
             stop_loss = float(stop_loss)
+            if side is PositionSide.BUY and stop_loss >= float(price):
+                raise ValueError("stop_loss de BUY debe estar por debajo del precio")
+            if side is PositionSide.SELL and stop_loss <= float(price):
+                raise ValueError("stop_loss de SELL debe estar por encima del precio")
         self.position = VirtualPosition(side, float(price), float(quantity), stop_loss)
 
     def close_position(self, price: float) -> float:
