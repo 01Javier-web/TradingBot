@@ -92,3 +92,15 @@ def test_max_open_positions_must_be_positive_integer() -> None:
 def test_stop_loss_required_must_be_boolean() -> None:
     with pytest.raises(ValueError):
         RiskConfig(stop_loss_required=1)  # type: ignore[arg-type]
+
+
+def test_daily_loss_limit_accounts_for_prospective_trade_risk() -> None:
+    decision = RiskManager().approve(
+        balance=10_000.0,
+        risk_amount=50.0,
+        daily_loss=160.0,
+        open_positions=0,
+        stop_loss_distance=50.0,
+    )
+    assert decision.approved is False
+    assert "podría superar" in decision.reason
