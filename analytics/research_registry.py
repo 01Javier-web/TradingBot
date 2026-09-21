@@ -23,6 +23,7 @@ class ResearchRecord:
     fast_ema_periods: tuple[int, ...]
     slow_ema_periods: tuple[int, ...]
     rsi_periods: tuple[int, ...]
+    schema_version: str = "research-v1"
 
 
 def record_from_run(run: ResearchRun) -> ResearchRecord:
@@ -35,6 +36,7 @@ def record_from_run(run: ResearchRun) -> ResearchRecord:
         fast_ema_periods=run.manifest.fast_ema_periods,
         slow_ema_periods=run.manifest.slow_ema_periods,
         rsi_periods=run.manifest.rsi_periods,
+        schema_version=run.manifest.schema_version,
     )
 
 
@@ -93,6 +95,7 @@ def list_research_records(directory: str | Path) -> tuple[ResearchRecord, ...]:
                 fast_ema_periods=tuple(manifest["fast_ema_periods"]),
                 slow_ema_periods=tuple(manifest["slow_ema_periods"]),
                 rsi_periods=tuple(manifest["rsi_periods"]),
+                schema_version=manifest.get("schema_version", "research-v1"),
             )
         )
     return tuple(records)
