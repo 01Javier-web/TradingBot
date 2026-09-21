@@ -7,6 +7,7 @@ from analytics.paper_audit import audit_paper_events
 from paper_trading.engine import PaperTradingEngine
 from paper_trading.live import run_bounded_paper_loop
 from paper_trading.portfolio import PaperPortfolio
+from backtesting.models import PositionSide
 from paper_trading.session import PaperTradingSession
 from strategy.signals import Signal
 
@@ -128,3 +129,29 @@ def test_audit_rejects_invalid_position_side() -> None:
 
     assert result.valid is False
     assert "OPEN side inválido" in result.issues
+
+
+def test_paper_engine_rejects_retrograde_market_time() -> None:
+    engine = PaperTradingEngine(PaperPortfolio())
+    engine.process(pd.Series({
+        "time": "2026-01-01T00:01:00Z", "close": 100.0, "atr": 1.0, "signal": Signal.WAIT
+    }))
+    result = engine.process(pd.Series({
+        "time": "2026-01-01T00:00:00Z", "close": 100.0, "atr": 1.0, "signal": Signal.WAIT
+    }))
+    assert result == "WAIT: market_time retrocede"
+    assert engine.history[-1]["reason"] == "market_time retrocede"
+
+
+@pytest.mark.parametrize(
+    "side,stop_loss",
+    [
+        (PositionSide.BUY, 100.0),
+        (PositionSide.BUY, 101.0),
+        (PositionSide.SELL, 100.0),
+        (PositionSide.SELL, 99.0),
+    ],
+)
+def test_portfolio_rejects_directionally_invalid_stop_loss(side, stop_loss) -> None:
+    with pytest.raises(ValueError, match="stop_loss"):
+        PaperPortfolio().open_position(side, 100.0, 1.0, stop_loss)
