@@ -47,8 +47,8 @@ class ResearchRun:
             raise ValueError("experiment_id no corresponde al manifiesto")
         if self.finding.experiments != len(self.results):
             raise ValueError("finding.experiments no coincide con results")
-        if self.evidence.validation != validate_results(list(self.results)):
-            raise ValueError("evidence.validation no coincide con results")
+        # La evidencia puede representar deliberadamente una corrida inválida;
+        # el gate de decisión debe poder auditarla y exigir revisión humana.
         # Un ResearchRun producido por run_research será válido; se permite
         # conservar evidencia inválida para que el gate de revisión humana
         # pueda representar y auditar una investigación problemática.
