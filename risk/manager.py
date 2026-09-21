@@ -78,8 +78,11 @@ class RiskManager:
 
         if risk_amount > balance * self.config.max_risk_per_trade:
             return RiskDecision(False, "supera el riesgo máximo por operación")
-        if daily_loss >= balance * self.config.max_daily_loss:
+        daily_loss_limit = balance * self.config.max_daily_loss
+        if daily_loss >= daily_loss_limit:
             return RiskDecision(False, "límite de pérdida diaria alcanzado")
+        if daily_loss + risk_amount > daily_loss_limit:
+            return RiskDecision(False, "la operación podría superar el límite de pérdida diaria")
         if open_positions >= self.config.max_open_positions:
             return RiskDecision(False, "máximo de posiciones abiertas alcanzado")
         if self.config.stop_loss_required and (stop_loss_distance is None or stop_loss_distance <= 0):
