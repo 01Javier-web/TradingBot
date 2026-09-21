@@ -11,6 +11,8 @@ from backtesting.models import BacktestResult
 
 def backtest_to_dict(result: BacktestResult) -> dict[str, Any]:
     """Serializa métricas y consistencia sin seleccionar una estrategia."""
+    if not isinstance(result, BacktestResult):
+        raise ValueError("result debe ser BacktestResult")
     consistency = validate_backtest_result(result)
     pnls = [trade.net_pnl for trade in result.trades]
     return {
