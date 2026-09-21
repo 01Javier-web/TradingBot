@@ -11,9 +11,13 @@ class PaperExecutionAdapter:
     """Implementación local que nunca contacta un broker."""
 
     def __init__(self, portfolio: PaperPortfolio) -> None:
+        if not isinstance(portfolio, PaperPortfolio):
+            raise TypeError("portfolio debe ser PaperPortfolio")
         self.portfolio = portfolio
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        if not isinstance(request, ExecutionRequest):
+            raise TypeError("request debe ser ExecutionRequest")
         side = PositionSide.BUY if request.side is ExecutionSide.BUY else PositionSide.SELL
         if self.portfolio.position is not None:
             return ExecutionResult(False, "ya existe una posición virtual abierta")
