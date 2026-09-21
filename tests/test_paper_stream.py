@@ -85,3 +85,20 @@ def test_bounded_stream_loop_reuses_one_virtual_session_and_deduplicates() -> No
     assert result.mode == "simulation-first"
     assert result.execution_authorized is False
     assert result.portfolio.position is not None or result.portfolio.balance == result.portfolio.initial_balance
+
+
+def test_stream_recalculates_indicators_with_prior_history(monkeypatch) -> None:
+    calls = []
+
+    def fake_signals(frame, config=None):
+        calls.append(len(frame))
+        result = frame.copy()
+        result["signal"] = "WAIT"
+        return result
+
+    monkeypatch.setattr("paper_trading.stream.generate_signals", fake_signals)
+    stream = PaperTradingStream(PaperTradingEngine(PaperPortfolio()))
+    stream.ingest(_data(100, 20))
+    stream.ingest(_data(120, 5, offset=20))
+
+    assert calls == [20, 25]
