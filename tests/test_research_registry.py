@@ -32,6 +32,7 @@ def test_record_from_run_keeps_experiment_identity() -> None:
     assert record.rows == 80
     assert record.train_ratio == 0.7
     assert record.fast_ema_periods == (5,)
+    assert record.schema_version == "research-v1"
 
 
 def test_save_research_record_uses_experiment_id(tmp_path: Path) -> None:
