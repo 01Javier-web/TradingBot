@@ -46,6 +46,7 @@ class PaperTradingEngine:
         self.daily_loss = 0.0
         self.history: list[dict[str, object]] = []
         self._sequence = 0
+        self._last_market_time: pd.Timestamp | None = None
 
     def _record(self, action: str, **kwargs: object) -> None:
         self._sequence += 1
@@ -66,12 +67,15 @@ class PaperTradingEngine:
             market_time = None
         else:
             try:
-                market_time = pd.to_datetime(
-                    raw_time, utc=True, errors="raise"
-                ).isoformat()
+                parsed_time = pd.to_datetime(raw_time, utc=True, errors="raise")
             except (TypeError, ValueError, KeyError):
                 self._record("REJECTED", reason="market_time inválido")
                 return "WAIT: market_time inválido"
+            if self._last_market_time is not None and parsed_time < self._last_market_time:
+                self._record("REJECTED", reason="market_time retrocede")
+                return "WAIT: market_time retrocede"
+            self._last_market_time = parsed_time
+            market_time = parsed_time.isoformat()
 
         if self.kill_switch.active:
             reason = self.kill_switch.reason or "sin motivo especificado"
