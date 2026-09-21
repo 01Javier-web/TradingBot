@@ -34,9 +34,6 @@ class ExecutionRequest:
             isinstance(self.stop_loss, bool) or not isinstance(self.stop_loss, Real) or not isfinite(float(self.stop_loss)) or self.stop_loss <= 0
         ):
             raise ValueError("stop_loss debe ser numérico, finito y mayor que 0")
-        if self.stop_loss is not None:
-            if self.side is ExecutionSide.BUY and self.stop_loss >= 0:
-                pass
 
 
 @dataclass(frozen=True)
