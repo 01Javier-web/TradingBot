@@ -36,6 +36,7 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
     count = 0
     previous_sequence = 0
     previous_time = None
+    open_side = None
 
     for count, event in enumerate(events, start=1):
         if not isinstance(event, dict):
@@ -95,6 +96,24 @@ def audit_paper_events(events: Iterable[dict[str, object]]) -> PaperAuditResult:
                 continue
             if not isfinite(numeric):
                 issues.append(f"evento {count}: {field} no finito")
+
+        side = event.get("side")
+        if action == "OPEN":
+            if open_side is not None:
+                issues.append(f"evento {count}: OPEN con posición ya abierta")
+            elif side in _ALLOWED_SIDES:
+                open_side = side
+        elif action in {"CLOSE", "STOP_LOSS"}:
+            if open_side is None:
+                issues.append(f"evento {count}: {action} sin posición abierta")
+            elif side in _ALLOWED_SIDES and side != open_side:
+                issues.append(f"evento {count}: {action} side no coincide con OPEN")
+            elif open_side is not None and side in _ALLOWED_SIDES:
+                open_side = None
+
+    if open_side is not None:
+        # Una posición abierta al final es válida; solo se mantiene como estado.
+        pass
 
     return PaperAuditResult(valid=not issues, event_count=count, issues=tuple(issues))
 
