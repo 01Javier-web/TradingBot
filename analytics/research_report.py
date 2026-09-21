@@ -29,6 +29,14 @@ def candidate_summary(candidates: tuple[ResearchCandidate, ...]) -> list[dict[st
             "rsi_period": candidate.result.config.rsi_period,
             "train_pnl": candidate.result.train_pnl,
             "test_pnl": candidate.result.test_pnl,
+            "train_trades": candidate.result.train_trades,
+            "test_trades": candidate.result.test_trades,
+            "train_drawdown": candidate.result.train_drawdown,
+            "test_drawdown": candidate.result.test_drawdown,
+            "train_win_rate": candidate.result.train_win_rate,
+            "test_win_rate": candidate.result.test_win_rate,
+            "train_profit_factor": candidate.result.train_profit_factor,
+            "test_profit_factor": candidate.result.test_profit_factor,
             "consistent": candidate.consistent,
         }
         for candidate in candidates
