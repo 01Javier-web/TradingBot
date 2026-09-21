@@ -15,6 +15,24 @@ class PositionSide(str, Enum):
     SELL = "SELL"
 
 
+def calculate_gross_pnl(
+    side: PositionSide,
+    entry_price: float,
+    exit_price: float,
+    quantity: float,
+) -> float:
+    """Calcula PnL bruto con la misma convención BUY/SELL en todo el sistema."""
+    if not isinstance(side, PositionSide):
+        raise ValueError("side debe ser PositionSide")
+    values = (entry_price, exit_price, quantity)
+    if any(isinstance(value, bool) or not isinstance(value, Real) or not isfinite(float(value)) for value in values):
+        raise ValueError("Los valores de PnL deben ser numéricos y finitos")
+    if entry_price <= 0 or exit_price <= 0 or quantity <= 0:
+        raise ValueError("precios y quantity deben ser mayores que 0")
+    direction = 1.0 if side is PositionSide.BUY else -1.0
+    return (float(exit_price) - float(entry_price)) * direction * float(quantity)
+
+
 @dataclass(frozen=True)
 class Trade:
     """Operación cerrada generada por el motor de backtesting."""
@@ -95,4 +113,4 @@ class BacktestResult:
         return self.final_balance - self.initial_balance
 
 
-__all__ = ["BacktestResult", "PositionSide", "Trade"]
+__all__ = ["BacktestResult", "PositionSide", "Trade", "calculate_gross_pnl"]
