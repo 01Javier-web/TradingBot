@@ -26,4 +26,6 @@ class MT5ExecutionAdapter:
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         """Rechaza órdenes hasta que la integración pase la fase de validación."""
+        if not isinstance(request, ExecutionRequest):
+            raise TypeError("request debe ser ExecutionRequest")
         return ExecutionResult(False, "ejecución MT5 bloqueada: modo simulation-first")
