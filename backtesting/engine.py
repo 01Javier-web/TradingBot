@@ -47,6 +47,10 @@ class BacktestEngine:
             )
 
         data = generate_signals(data, config).reset_index(drop=True)
+        if "signal" not in data.columns:
+            raise ValueError("La estrategia debe producir una columna signal")
+        if data["signal"].isna().any():
+            raise ValueError("La estrategia no puede producir señales nulas")
         balance = self.initial_balance
         equity = [balance]
         position: PositionSide | None = None
