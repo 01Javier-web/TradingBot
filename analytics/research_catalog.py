@@ -25,6 +25,6 @@ def save_catalog(records: tuple[ResearchRecord, ...], path: str | Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(
-        json.dumps(catalog_to_dict(records), indent=2, ensure_ascii=False),
+        json.dumps(catalog_to_dict(records), indent=2, ensure_ascii=False, sort_keys=True, allow_nan=False),
         encoding="utf-8",
     )
